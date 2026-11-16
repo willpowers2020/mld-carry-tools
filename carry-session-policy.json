@@ -1,0 +1,5 @@
+{
+  "ready": false,
+  "reason": "Current full Carry physical-session and calendar registry not yet verified. Legacy empty and conflicting TOD labels cannot establish required sessions.",
+  "states": {}
+}
