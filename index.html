@@ -309,18 +309,51 @@ body {
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .signal-detail strong { color: #a78bfa; } }
 :root[data-theme="dark"] .signal-detail strong { color: #a78bfa; }
 
+/* Cold pair signal (amber) */
+.badge-cold-sig { background: linear-gradient(135deg, #d9730020, #f0980020); color: #d97300; border: 1px solid #d9730040; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .badge-cold-sig { background: linear-gradient(135deg, #f0980030, #d9730015); color: #f09800; border-color: #f0980040; } }
+:root[data-theme="dark"] .badge-cold-sig { background: linear-gradient(135deg, #f0980030, #d9730015); color: #f09800; border-color: #f0980040; }
+
+/* Evening→Evening signal (teal) */
+.badge-eve-sig { background: linear-gradient(135deg, #0d9e7220, #10b98120); color: #0d9e72; border: 1px solid #0d9e7240; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .badge-eve-sig { background: linear-gradient(135deg, #10b98130, #0d9e7215); color: #34d399; border-color: #34d39940; } }
+:root[data-theme="dark"] .badge-eve-sig { background: linear-gradient(135deg, #10b98130, #0d9e7215); color: #34d399; border-color: #34d39940; }
+
+/* Cold+Eve stacked signal (hot red-orange) */
+.badge-cold-eve { background: linear-gradient(135deg, #dc262620, #ef444420); color: #dc2626; border: 1px solid #dc262640; font-weight: 700; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .badge-cold-eve { background: linear-gradient(135deg, #ef444430, #dc262615); color: #f87171; border-color: #f8717140; } }
+:root[data-theme="dark"] .badge-cold-eve { background: linear-gradient(135deg, #ef444430, #dc262615); color: #f87171; border-color: #f8717140; }
+.badge-cold-eve::before { content: '🔥'; margin-right: 2px; }
+
+.signal-callout-cold-eve { background: linear-gradient(135deg, #dc262608, #ef444405); border: 1px solid #dc262630; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 0.82rem; }
+.signal-callout-cold-eve strong { color: #dc2626; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .signal-callout-cold-eve { border-color: #f8717130; } :root:not([data-theme="light"]) .signal-callout-cold-eve strong { color: #f87171; } }
+:root[data-theme="dark"] .signal-callout-cold-eve { border-color: #f8717130; }
+:root[data-theme="dark"] .signal-callout-cold-eve strong { color: #f87171; }
+
+.signal-detail-new { background: linear-gradient(135deg, #dc262610, #ef444405); border-radius: 6px; padding: 8px 12px; margin-top: 8px; font-size: 0.76rem; line-height: 1.7; }
+.signal-detail-new strong { color: #dc2626; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .signal-detail-new strong { color: #f87171; } }
+:root[data-theme="dark"] .signal-detail-new strong { color: #f87171; }
+
+.day-card.has-cold-eve { border-color: #dc262660; }
+.day-card.has-cold-eve:hover { border-color: #dc2626; box-shadow: 0 2px 12px rgba(220,38,38,0.15); }
+
 [hidden] { display: none !important; }
 </style>
 
 <div class="header">
   <h1>Carry Explorer</h1>
-  <p>Oct 1 – Nov 14, 2026 &nbsp;·&nbsp; All States Pick 4 &nbsp;·&nbsp; 2DP + 3DP Carryover Analysis</p>
+  <p>Oct 2 – Nov 14, 2026 &nbsp;·&nbsp; All States Pick 4 &nbsp;·&nbsp; 2DP + 3DP Carryover Analysis</p>
 </div>
 
 <div id="view-cal">
   <p class="cal-intro">Every day, the winning Pick 4 number shares at least one 2-digit pair with yesterday's draws — <strong>across 70–90% of states</strong>. Click a date to see exactly how.</p>
   <div class="signal-callout">
-    <strong>⚡ Signal events highlighted:</strong> When a Singles source draw produces <em>exactly one</em> carried pair with 11+ days dormancy, that pair wins <strong>57.9%</strong> of the time (1.23x lift). Look for the purple ⚡ badges below.
+    <strong>⚡ Triple Signal:</strong> Singles source + only 1 carried pair + 11d+ dormancy → <strong>57.9%</strong> only-carrier rate (1.23x lift). Purple ⚡ badges.
+  </div>
+  <div class="signal-callout-cold-eve">
+    <strong>🔥 NEW — Cold+Eve Signal:</strong> A pair unseen for 14+ days that carries between <em>evening draws</em> → <strong>43.8%</strong> only-carrier rate (<strong>2.33x lift</strong>). The strongest stacked signal found. Look for the red 🔥 badges below.
   </div>
   <div class="stat-row" id="summary-stats"></div>
   <div class="day-grid" id="day-grid"></div>
@@ -356,7 +389,10 @@ function renderPairChip(pObj, isCarried, clickable) {
   const dc = isCarried ? 'pair-carried' : dormClass(pObj.d);
   const dormLabel = pObj.d != null ? `<span class="dorm-tag">${pObj.d}d</span>` : '';
   const attr = clickable ? `data-pair="${pObj.p}"` : '';
-  return `<span class="pair-chip ${dc}" ${attr}><span class="pair-name">${pObj.p}</span>${dormLabel}</span>`;
+  const heatInfo = pObj.heat14 != null ? ` · heat14:${pObj.heat14}` : '';
+  const todInfo = pObj.tod ? ` · ${pObj.tod}` : '';
+  const title = `${pObj.p} — dorm:${pObj.d ?? '?'}d${heatInfo}${todInfo}`;
+  return `<span class="pair-chip ${dc}" ${attr} title="${title}"><span class="pair-name">${pObj.p}</span>${dormLabel}</span>`;
 }
 
 // Generate all 4-digit numbers containing a specific 2DP
@@ -434,16 +470,20 @@ function renderCal() {
     <div class="stat-tile"><div class="n">${avg}%</div><div class="l">2DP Carry Rate</div></div>
     <div class="stat-tile" style="border-color:#2563eb40"><div class="n" style="color:#2563eb">${avg3}%</div><div class="l">3DP Carry (3d)</div></div>
     <div class="stat-tile"><div class="n">${totalCarry}/${totalAll}</div><div class="l">2DP State-Days</div></div>
-    <div class="stat-tile" style="border-color:#7c3aed40"><div class="n" style="color:#7c3aed">⚡ ${totalSig}</div><div class="l">Signal Events</div></div>`;
+    <div class="stat-tile" style="border-color:#7c3aed40"><div class="n" style="color:#7c3aed">⚡ ${totalSig}</div><div class="l">Triple Signal</div></div>
+    <div class="stat-tile" style="border-color:#dc262640"><div class="n" style="color:#dc2626">🔥 ${DATA.reduce((s,t)=>s+(t.cold_eve_signal_count||0),0)}</div><div class="l">Cold+Eve (2.3x)</div></div>`;
 
   document.getElementById('day-grid').innerHTML = DATA.map((t, i) => {
     const miss = t.states.filter(s => !s.has_carry).map(s => s.state);
     const sigCount = t.signal_count || 0;
+    const ceCount = t.cold_eve_signal_count || 0;
     const sigBadge = sigCount > 0 ? `<span class="signal-badge">${sigCount} signal${sigCount>1?'s':''}</span>` : '';
-    return `<div class="day-card${sigCount?' has-signal':''}" data-idx="${i}">
+    const ceBadge = ceCount > 0 ? `<span class="st-badge badge-cold-eve">${ceCount} cold+eve</span>` : '';
+    const cardClass = ceCount ? ' has-cold-eve' : sigCount ? ' has-signal' : '';
+    return `<div class="day-card${cardClass}" data-idx="${i}">
       <div class="day-card-head">
         <span class="day-card-dates">${fmtDate(t.from_date)} <span class="day-card-arrow">→</span> ${fmtDate(t.to_date)}</span>
-        ${sigBadge}
+        ${ceBadge}${sigBadge}
         <span class="day-card-rate ${rateClass(t.rate)}">${t.rate}%</span>
       </div>
       <div class="day-card-bar"><div class="day-card-bar-fill" style="width:${t.rate}%"></div></div>
@@ -491,7 +531,8 @@ function renderDetail2DP(t) {
     <span class="legend-chip"><span class="legend-dot dot-warm"></span> 4-10d</span>
     <span class="legend-chip"><span class="legend-dot dot-cold"></span> 11-30d</span>
     <span class="legend-chip"><span class="legend-dot dot-ice"></span> 30d+</span>
-    <span class="legend-chip"><span class="signal-badge" style="font-size:0.62rem">Signal</span></span>
+    <span class="legend-chip"><span class="signal-badge" style="font-size:0.62rem">Triple</span></span>
+    <span class="legend-chip"><span class="st-badge badge-cold-eve" style="font-size:0.62rem;padding:1px 5px">Cold+Eve</span></span>
     <span style="color:var(--accent);font-size:0.68rem;margin-left:4px">Click any pair →</span>
   </div>`;
 
@@ -499,9 +540,22 @@ function renderDetail2DP(t) {
   if (sigCount > 0) {
     const sigStates = t.states.filter(s => s.signal);
     html += `<div class="signal-callout" style="margin-top:12px">
-      <strong>⚡ ${sigCount} signal event${sigCount>1?'s':''} this day:</strong>
+      <strong>⚡ ${sigCount} triple signal${sigCount>1?'s':''} this day:</strong>
       ${sigStates.map(s => `${s.state} (pair ${s.signal_pair}, ${s.signal_dorm}d dormant)`).join(' · ')}
-      <br><span style="font-size:0.76rem;opacity:0.8">Singles source + only 1 carrier + 11d+ dormancy → 57.9% win rate</span>
+      <br><span style="font-size:0.76rem;opacity:0.8">Singles source + only 1 carrier + 11d+ dormancy → 57.9% only-carrier rate</span>
+    </div>`;
+  }
+
+  const ceCount = t.cold_eve_signal_count || 0;
+  if (ceCount > 0) {
+    const ceStates = t.states.filter(s => s.cold_eve_signal);
+    html += `<div class="signal-callout-cold-eve" style="margin-top:12px">
+      <strong>🔥 ${ceCount} cold+eve signal${ceCount>1?'s':''} this day:</strong>
+      ${ceStates.map(s => {
+        const pairs = (s.cold_eve_pairs || []).join(', ');
+        return `${s.state} (${pairs})`;
+      }).join(' · ')}
+      <br><span style="font-size:0.76rem;opacity:0.8">Cold pair (14d+ unseen) + Evening→Evening → 43.8% only-carrier rate (2.33x lift)</span>
     </div>`;
   }
 
@@ -510,11 +564,17 @@ function renderDetail2DP(t) {
     const d2Nums = s.d2_draws.map(d => d.num).join(', ');
     const carriedSet = new Set(s.d2_draws.flatMap(d => d.carried_from_d1));
     const isSig = s.signal;
-    html += `<div class="state-row${isSig?' has-signal':''}">
+    const isCE = s.cold_eve_signal;
+    const isCold = s.cold_signal;
+    const isEve = s.eve_signal;
+    html += `<div class="state-row${isCE?' has-signal':isSig?' has-signal':''}">
       <div class="state-row-head" data-state="${s.state}">
         <span class="st-name">${s.state}</span>
         <span class="st-nums">${fmtShort(t.from_date)}: ${d1Nums} → ${fmtShort(t.to_date)}: ${d2Nums}</span>
-        ${isSig ? '<span class="st-badge badge-signal">⚡ Signal</span>' : ''}
+        ${isCE ? '<span class="st-badge badge-cold-eve">Cold+Eve</span>' : ''}
+        ${isSig && !isCE ? '<span class="st-badge badge-signal">⚡ Signal</span>' : ''}
+        ${isCold && !isCE ? '<span class="st-badge badge-cold-sig" style="font-size:0.68rem;padding:2px 6px">❄️ Cold</span>' : ''}
+        ${isEve && !isCE ? '<span class="st-badge badge-eve-sig" style="font-size:0.68rem;padding:2px 6px">🌙 Eve</span>' : ''}
         <span class="st-badge badge-carry">${carriedSet.size} pair${carriedSet.size>1?'s':''}</span>
         <span class="st-chevron">▸</span>
       </div>
@@ -544,6 +604,23 @@ function renderDetail2DP(t) {
         <strong>Source:</strong> ${srcPattern} &nbsp;·&nbsp;
         <strong>Only carrier:</strong> Yes<br>
         <span style="opacity:0.8">This combination (singles source + only 1 carried pair + ${s.signal_dorm}d dormancy) hits the winner <strong>57.9%</strong> of the time.</span>
+      </div>`;
+    }
+    if (isCE) {
+      const cePairs = (s.cold_eve_pairs || []).join(', ');
+      const coldEntries = (s.carried || []).filter(c => c.heat14 === 0 && c.tod === 'Evening->Evening');
+      html += `<div class="signal-detail-new">
+        <strong>🔥 Cold + Evening→Evening Signal</strong><br>
+        <strong>Pair${coldEntries.length>1?'s':''}:</strong> ${cePairs} &nbsp;·&nbsp;
+        ${coldEntries.map(c => `<strong>Dormancy:</strong> ${c.d || '?'}d · <strong>Heat14:</strong> 0 · <strong>TOD:</strong> ${c.tod}`).join('<br>')}
+        <br><span style="opacity:0.8">Cold pair (unseen 14d) carrying between evening draws → <strong>43.8%</strong> only-carrier rate (2.33x lift). Strongest stacked signal.</span>
+      </div>`;
+    } else if (isCold && !isSig) {
+      const coldPairs = (s.carried || []).filter(c => c.heat14 === 0);
+      html += `<div style="background:linear-gradient(135deg,#d9730008,#f0980005);border:1px solid #d9730030;border-radius:6px;padding:8px 12px;margin-top:8px;font-size:0.76rem;line-height:1.7">
+        <strong style="color:#d97300">❄️ Cold Pair Carry</strong><br>
+        ${coldPairs.map(c => `Pair <strong style="color:#d97300">${c.p}</strong> — dormancy ${c.d || '?'}d, unseen in last 14 days for this state`).join('<br>')}
+        <br><span style="opacity:0.8">Cold pairs (14d+ unseen) → 28.1% only-carrier rate (1.49x lift)</span>
       </div>`;
     }
     html += `</div></div>`;

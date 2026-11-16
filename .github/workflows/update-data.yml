@@ -2,16 +2,14 @@ name: Update Carry Data
 
 on:
   schedule:
-    # Run daily at 6 AM UTC (1 AM ET) — after all evening draws are in
+    # Run daily at 6 AM UTC (1 AM EST / 10 PM PST)
+    # After all US evening draws have completed
     - cron: '0 6 * * *'
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
   update:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
       - uses: actions/checkout@v4
 
@@ -20,21 +18,25 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: cd scripts && npm install
+        working-directory: scripts
+        run: npm install
 
       - name: Generate carry data
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: node scripts/generate-carry-data.mjs
 
-      - name: Commit and push if changed
+      - name: Check for changes
+        id: changes
+        run: |
+          git diff --quiet carry-data.json recent-draws.json index.html || echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push
+        if: steps.changes.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          DATE=$(date -u +%Y-%m-%d)
           git add carry-data.json recent-draws.json index.html
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update carry data $(date -u +%Y-%m-%d)"
-            git push
-          fi
+          git commit -m "Auto-update carry data for $DATE"
+          git push

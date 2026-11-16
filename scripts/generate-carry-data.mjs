@@ -140,13 +140,41 @@ async function run() {
         for (let k = hist.length - 1; k >= 0; k--) {
           if (hist[k] < d1) { dorm = Math.round((new Date(d1) - new Date(hist[k])) / 86400000); break; }
         }
-        return { p, d: dorm };
+        // Heat: how many times this pair appeared in the state in the last 14 days
+        let heat14 = 0;
+        for (const hd of hist) {
+          if (hd >= d1) break;
+          const diff = Math.round((new Date(d1) - new Date(hd)) / 86400000);
+          if (diff <= 14) heat14++;
+        }
+        return { p, d: dorm, heat14 };
       });
+
+      // Determine TOD transition for each carried pair
+      const carriedTOD = {};
+      for (const pair of carried2) {
+        for (const d1dr of d1Draws) {
+          for (const d2dr of d2Draws) {
+            if (get2DPs(d1dr.num).includes(pair) && get2DPs(d2dr.num).includes(pair)) {
+              carriedTOD[pair] = `${d1dr.tod || 'unknown'}->${d2dr.tod || 'unknown'}`;
+            }
+          }
+        }
+      }
+      // Annotate each carried entry with TOD transition
+      for (const c of carried2WithDorm) {
+        c.tod = carriedTOD[c.p] || null;
+      }
 
       const hasSingles = d1Draws.some(dr => digitPattern(dr.num) === 'Single');
       const onlyCarrier2 = carried2.length === 1;
       const maxDorm2 = carried2WithDorm.length ? Math.max(...carried2WithDorm.map(c => c.d || 0)) : 0;
       const signal2 = hasSingles && onlyCarrier2 && maxDorm2 >= 11;
+      // New signals
+      const hasColdSignal = carried2WithDorm.some(c => c.heat14 === 0);
+      const hasEveSignal = carried2WithDorm.some(c => c.tod === 'Evening->Evening');
+      const coldEvePairs = carried2WithDorm.filter(c => c.heat14 === 0 && c.tod === 'Evening->Evening');
+      const hasColdEveSignal = coldEvePairs.length > 0;
 
       if (carried2.length > 0) carryCount2++;
 
@@ -211,7 +239,10 @@ async function run() {
         carried: carried2WithDorm, carried_3dp: carried3WithInfo,
         has_carry: carried2.length > 0, has_carry_3dp: carried3.length > 0,
         signal: signal2, signal_pair: onlyCarrier2 && carried2.length ? carried2[0] : null,
-        signal_dorm: maxDorm2, has_singles: hasSingles, only_carrier: onlyCarrier2
+        signal_dorm: maxDorm2, has_singles: hasSingles, only_carrier: onlyCarrier2,
+        cold_signal: hasColdSignal, eve_signal: hasEveSignal,
+        cold_eve_signal: hasColdEveSignal,
+        cold_eve_pairs: coldEvePairs.map(c => c.p)
       });
     }
 
@@ -225,6 +256,9 @@ async function run() {
       no_carry_states: totalCount - carryCount2,
       rate: rate2, rate_3dp: rate3,
       signal_count: stateResults.filter(s => s.signal).length,
+      cold_signal_count: stateResults.filter(s => s.cold_signal).length,
+      eve_signal_count: stateResults.filter(s => s.eve_signal).length,
+      cold_eve_signal_count: stateResults.filter(s => s.cold_eve_signal).length,
       window_3dp: THREE_DP_WINDOW, states: stateResults
     });
   }
@@ -255,9 +289,9 @@ async function run() {
   let indexHtml = readFileSync(indexPath, 'utf8');
   const dateRangeRe = /Oct 1 – Nov \d+, 2026|[A-Z][a-z]+ \d+ – [A-Z][a-z]+ \d+, \d{4}/;
   const fmtMonth = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const startD = new Date(first);
-  const endD = new Date(last);
-  const rangeStr = `${fmtMonth[startD.getMonth()]} ${startD.getDate()} – ${fmtMonth[endD.getMonth()]} ${endD.getDate()}, ${endD.getFullYear()}`;
+  const startD = new Date(first + 'T12:00:00Z');
+  const endD = new Date(last + 'T12:00:00Z');
+  const rangeStr = `${fmtMonth[startD.getUTCMonth()]} ${startD.getUTCDate()} – ${fmtMonth[endD.getUTCMonth()]} ${endD.getUTCDate()}, ${endD.getUTCFullYear()}`;
   indexHtml = indexHtml.replace(dateRangeRe, rangeStr);
   writeFileSync(indexPath, indexHtml);
   console.log(`Updated date range in index.html: ${rangeStr}`);
