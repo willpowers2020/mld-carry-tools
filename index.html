@@ -350,6 +350,62 @@ body {
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .badge-freezing { background: linear-gradient(135deg, #6366f130, #818cf815); color: #a5b4fc; border-color: #818cf840; } }
 :root[data-theme="dark"] .badge-freezing { background: linear-gradient(135deg, #6366f130, #818cf815); color: #a5b4fc; border-color: #818cf840; }
 
+/* ── SIGNALS SECTION ── */
+.signals-section { margin-bottom: 24px; }
+.signals-header { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; margin: 0 0 4px; }
+.signals-sub { font-size: 0.78rem; color: var(--fg-muted); margin: 0 0 16px; }
+
+.sig-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.sig-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; position: relative; overflow: hidden; }
+.sig-card-icon { font-size: 1.3rem; margin-bottom: 4px; }
+.sig-card-name { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 700; margin-bottom: 2px; }
+.sig-card-type { font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-muted); margin-bottom: 8px; }
+.sig-card-stats { display: flex; gap: 16px; margin-bottom: 8px; }
+.sig-card-stat { text-align: center; }
+.sig-card-stat .n { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; }
+.sig-card-stat .l { font-size: 0.6rem; color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.sig-card-bar { height: 4px; border-radius: 2px; background: var(--border); margin-bottom: 6px; }
+.sig-card-bar-fill { height: 100%; border-radius: 2px; }
+.sig-card-cond { font-size: 0.7rem; color: var(--fg-muted); line-height: 1.4; }
+.sig-card.card-hot { border-color: #dc262640; }
+.sig-card.card-hot .sig-card-name { color: #dc2626; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sig-card.card-hot .sig-card-name { color: #f87171; } }
+:root[data-theme="dark"] .sig-card.card-hot .sig-card-name { color: #f87171; }
+.sig-card.card-purple { border-color: #7c3aed40; }
+.sig-card.card-purple .sig-card-name { color: #7c3aed; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sig-card.card-purple .sig-card-name { color: #a78bfa; } }
+:root[data-theme="dark"] .sig-card.card-purple .sig-card-name { color: #a78bfa; }
+.sig-card.card-amber { border-color: #d9730040; }
+.sig-card.card-amber .sig-card-name { color: #d97300; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sig-card.card-amber .sig-card-name { color: #f09800; } }
+:root[data-theme="dark"] .sig-card.card-amber .sig-card-name { color: #f09800; }
+.sig-card.card-teal { border-color: #0d9e7240; }
+.sig-card.card-teal .sig-card-name { color: #0d9e72; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sig-card.card-teal .sig-card-name { color: #34d399; } }
+:root[data-theme="dark"] .sig-card.card-teal .sig-card-name { color: #34d399; }
+.sig-card.card-blue { border-color: #2563eb40; }
+.sig-card.card-blue .sig-card-name { color: #2563eb; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sig-card.card-blue .sig-card-name { color: #60a5fa; } }
+:root[data-theme="dark"] .sig-card.card-blue .sig-card-name { color: #60a5fa; }
+.sig-card.card-indigo { border-color: #4338ca40; }
+.sig-card.card-indigo .sig-card-name { color: #4338ca; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sig-card.card-indigo .sig-card-name { color: #818cf8; } }
+:root[data-theme="dark"] .sig-card.card-indigo .sig-card-name { color: #818cf8; }
+
+.latest-signals { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 20px; }
+.latest-signals-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.latest-signals-title { font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; font-weight: 700; }
+.latest-signals-date { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--fg-muted); }
+.ls-pulse { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse-glow 2s ease-in-out infinite; }
+@keyframes pulse-glow { 0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); } 50% { box-shadow: 0 0 0 6px rgba(34,197,94,0); } }
+.ls-grid { display: flex; flex-direction: column; gap: 6px; }
+.ls-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px; background: var(--bg); font-size: 0.78rem; cursor: pointer; transition: background 0.15s; }
+.ls-row:hover { background: var(--accent-light); }
+.ls-state { font-family: 'JetBrains Mono', monospace; font-weight: 700; min-width: 28px; }
+.ls-badges { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; min-width: 0; }
+.ls-pair { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 0.76rem; }
+.ls-empty { font-size: 0.78rem; color: var(--fg-muted); padding: 8px 0; text-align: center; }
+
 .glossary-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
 .glossary-toggle { display: flex; align-items: center; gap: 8px; padding: 12px 16px; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 600; color: var(--fg); border: none; background: none; width: 100%; text-align: left; }
 .glossary-toggle:hover { background: var(--accent-light); }
@@ -362,12 +418,6 @@ body {
 .glossary-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 0.76rem; line-height: 1.6; }
 .glossary-grid .g-tier { font-family: 'JetBrains Mono', monospace; font-weight: 600; white-space: nowrap; }
 .glossary-grid .g-desc { color: var(--fg-muted); }
-.signal-table { width: 100%; border-collapse: collapse; font-size: 0.74rem; margin-top: 8px; }
-.signal-table th { text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--fg-muted); padding: 4px 8px; border-bottom: 1px solid var(--border); }
-.signal-table td { padding: 4px 8px; border-bottom: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; }
-.signal-table .sig-name { font-weight: 600; }
-.signal-table .sig-rate { font-weight: 700; }
-.signal-table .sig-lift { font-weight: 700; }
 
 [hidden] { display: none !important; }
 </style>
@@ -379,63 +429,134 @@ body {
 
 <div id="view-cal">
   <p class="cal-intro">Every day, the winning Pick 4 number shares at least one 2-digit pair with yesterday's draws — <strong>across 70–90% of states</strong>. Click a date to see exactly how.</p>
-  <div class="signal-callout">
-    <strong>⚡ Triple Signal:</strong> Singles source + only 1 carried pair + 11d+ dormancy → <strong>57.9%</strong> only-carrier rate (1.23x lift). Purple ⚡ badges.
-  </div>
-  <div class="signal-callout-cold-eve">
-    <strong>🔥 Cold+Eve Signal:</strong> A pair unseen for 14+ days that carries between <em>evening draws</em> → <strong>43.8%</strong> only-carrier rate (<strong>2.33x lift</strong>). The strongest stacked signal found. Look for the red 🔥 badges below.
+
+  <!-- ── SIGNALS SECTION ── -->
+  <div class="signals-section">
+    <h2 class="signals-header">Signals</h2>
+    <p class="signals-sub">Carry patterns with proven statistical lift. These are the outliers that narrow your PL.</p>
+
+    <div class="sig-cards">
+      <div class="sig-card card-hot">
+        <div class="sig-card-icon">🔥</div>
+        <div class="sig-card-name">Cold + Eve</div>
+        <div class="sig-card-type">2DP · Strongest Signal</div>
+        <div class="sig-card-stats">
+          <div class="sig-card-stat"><div class="n" style="color:#dc2626">43.8%</div><div class="l">OC Rate</div></div>
+          <div class="sig-card-stat"><div class="n" style="color:#dc2626">2.33x</div><div class="l">Lift</div></div>
+          <div class="sig-card-stat"><div class="n">105</div><div class="l">Events</div></div>
+        </div>
+        <div class="sig-card-bar"><div class="sig-card-bar-fill" style="width:93%;background:linear-gradient(90deg,#dc2626,#ef4444)"></div></div>
+        <div class="sig-card-cond">Cold pair (14d+ unseen) carrying between evening draws</div>
+      </div>
+
+      <div class="sig-card card-purple">
+        <div class="sig-card-icon">⚡</div>
+        <div class="sig-card-name">Triple Signal</div>
+        <div class="sig-card-type">2DP · Classic</div>
+        <div class="sig-card-stats">
+          <div class="sig-card-stat"><div class="n" style="color:#7c3aed">57.9%</div><div class="l">Win Rate</div></div>
+          <div class="sig-card-stat"><div class="n" style="color:#7c3aed">1.23x</div><div class="l">Lift</div></div>
+          <div class="sig-card-stat"><div class="n">197</div><div class="l">Events</div></div>
+        </div>
+        <div class="sig-card-bar"><div class="sig-card-bar-fill" style="width:49%;background:linear-gradient(90deg,#7c3aed,#a78bfa)"></div></div>
+        <div class="sig-card-cond">Singles source + only 1 carried pair + 11d+ dormancy</div>
+      </div>
+
+      <div class="sig-card card-amber">
+        <div class="sig-card-icon">❄️</div>
+        <div class="sig-card-name">Cold Pair</div>
+        <div class="sig-card-type">2DP</div>
+        <div class="sig-card-stats">
+          <div class="sig-card-stat"><div class="n" style="color:#d97300">28.1%</div><div class="l">OC Rate</div></div>
+          <div class="sig-card-stat"><div class="n" style="color:#d97300">1.49x</div><div class="l">Lift</div></div>
+          <div class="sig-card-stat"><div class="n">338</div><div class="l">Events</div></div>
+        </div>
+        <div class="sig-card-bar"><div class="sig-card-bar-fill" style="width:60%;background:linear-gradient(90deg,#d97300,#f09800)"></div></div>
+        <div class="sig-card-cond">Pair not seen in state for 14+ days (heat14 = 0)</div>
+      </div>
+
+      <div class="sig-card card-teal">
+        <div class="sig-card-icon">🌙</div>
+        <div class="sig-card-name">Eve → Eve</div>
+        <div class="sig-card-type">2DP</div>
+        <div class="sig-card-stats">
+          <div class="sig-card-stat"><div class="n" style="color:#0d9e72">26.9%</div><div class="l">OC Rate</div></div>
+          <div class="sig-card-stat"><div class="n" style="color:#0d9e72">1.43x</div><div class="l">Lift</div></div>
+          <div class="sig-card-stat"><div class="n">958</div><div class="l">Events</div></div>
+        </div>
+        <div class="sig-card-bar"><div class="sig-card-bar-fill" style="width:57%;background:linear-gradient(90deg,#0d9e72,#10b981)"></div></div>
+        <div class="sig-card-cond">Both source and winner are evening draws</div>
+      </div>
+
+      <div class="sig-card card-blue">
+        <div class="sig-card-icon">🌙</div>
+        <div class="sig-card-name">Dorm14+ Mid→Eve</div>
+        <div class="sig-card-type">3DP · Strongest</div>
+        <div class="sig-card-stats">
+          <div class="sig-card-stat"><div class="n" style="color:#2563eb">54.2%</div><div class="l">OC Rate</div></div>
+          <div class="sig-card-stat"><div class="n" style="color:#2563eb">1.29x</div><div class="l">Lift</div></div>
+          <div class="sig-card-stat"><div class="n">118</div><div class="l">Events</div></div>
+        </div>
+        <div class="sig-card-bar"><div class="sig-card-bar-fill" style="width:52%;background:linear-gradient(90deg,#2563eb,#3b82f6)"></div></div>
+        <div class="sig-card-cond">14d+ dormant triple carrying from midday to evening</div>
+      </div>
+
+      <div class="sig-card card-indigo">
+        <div class="sig-card-icon">🧊</div>
+        <div class="sig-card-name">Freezing</div>
+        <div class="sig-card-type">2DP + 3DP · 30d+ dormancy</div>
+        <div class="sig-card-stats">
+          <div class="sig-card-stat"><div class="n" style="color:#4338ca">48.2%</div><div class="l">3DP OC</div></div>
+          <div class="sig-card-stat"><div class="n" style="color:#4338ca">1.15x</div><div class="l">Lift</div></div>
+          <div class="sig-card-stat"><div class="n">168</div><div class="l">Events</div></div>
+        </div>
+        <div class="sig-card-bar"><div class="sig-card-bar-fill" style="width:46%;background:linear-gradient(90deg,#4338ca,#6366f1)"></div></div>
+        <div class="sig-card-cond">Pair or triple dormant 30+ days suddenly resurfacing. Longer sleep = stronger signal.</div>
+      </div>
+    </div>
+
+    <div class="latest-signals" id="latest-signals"></div>
   </div>
 
+  <!-- ── GLOSSARY ── -->
   <div class="glossary-panel">
     <button class="glossary-toggle" id="glossary-btn">
-      <span class="g-icon" id="glossary-chevron">▸</span> Glossary &amp; Signals Reference
+      <span class="g-icon" id="glossary-chevron">▸</span> Glossary &amp; Dormancy Tiers
     </button>
     <div class="glossary-body" id="glossary-body">
       <h4>Dormancy Tiers</h4>
       <p style="font-size:0.74rem;color:var(--fg-muted);margin:0 0 8px">How long since a pair/triple was last drawn in that state before the source draw.</p>
       <div class="glossary-grid">
         <span class="g-tier" style="color:var(--dorm-fresh)">Fresh (1-3d)</span>
-        <span class="g-desc">Seen within the last 3 days — highly active, common carry</span>
+        <span class="g-desc">Highly active, common carry — baseline</span>
         <span class="g-tier" style="color:var(--dorm-warm)">Warm (4-13d)</span>
-        <span class="g-desc">Moderate gap — still circulating but starting to cool</span>
+        <span class="g-desc">Still circulating, starting to cool</span>
         <span class="g-tier" style="color:var(--dorm-cold)">Cold (14-29d)</span>
-        <span class="g-desc">Dormant 14+ days — resurfacing after silence. Key signal threshold (1.49x lift)</span>
+        <span class="g-desc">Dormant — key signal threshold (1.49x lift)</span>
         <span class="g-tier" style="color:var(--freezing)">🧊 Freezing (30d+)</span>
-        <span class="g-desc">A full month+ of dormancy — rare resurgence, strongest dormancy signal</span>
+        <span class="g-desc">Full month+ dormancy — rare resurgence, strongest signal</span>
       </div>
-
-      <h4>2DP Signals</h4>
-      <table class="signal-table">
-        <tr><th>Signal</th><th>Badge</th><th>Rate</th><th>Lift</th><th>Condition</th></tr>
-        <tr><td class="sig-name">🔥 Cold+Eve</td><td><span class="st-badge badge-cold-eve" style="font-size:0.62rem;padding:1px 5px">Cold+Eve</span></td><td class="sig-rate">43.8%</td><td class="sig-lift" style="color:#dc2626">2.33x</td><td>Cold pair (14d+ unseen) + Evening→Evening transition</td></tr>
-        <tr><td class="sig-name">❄️ Cold Pair</td><td><span class="st-badge badge-cold-sig" style="font-size:0.62rem;padding:1px 5px">❄️ Cold</span></td><td class="sig-rate">28.1%</td><td class="sig-lift" style="color:#d97300">1.49x</td><td>Pair not seen in state for 14+ days (heat14 = 0)</td></tr>
-        <tr><td class="sig-name">🌙 Eve→Eve</td><td><span class="st-badge badge-eve-sig" style="font-size:0.62rem;padding:1px 5px">🌙 Eve</span></td><td class="sig-rate">26.9%</td><td class="sig-lift" style="color:#0d9e72">1.43x</td><td>Both source and winner are evening draws</td></tr>
-        <tr><td class="sig-name">⚡ Triple Signal</td><td><span class="signal-badge" style="font-size:0.62rem">Triple</span></td><td class="sig-rate">57.9%</td><td class="sig-lift" style="color:#7c3aed">1.23x</td><td>Singles source + only 1 carried pair + 11d+ dormancy</td></tr>
-      </table>
-
-      <h4>3DP Signals</h4>
-      <table class="signal-table">
-        <tr><th>Signal</th><th>Badge</th><th>OC Rate</th><th>Lift</th><th>Condition</th></tr>
-        <tr><td class="sig-name">Dorm14+ Mid→Eve</td><td><span class="st-badge badge-3dp" style="font-size:0.62rem;padding:1px 5px">🌙 D14+Eve</span></td><td class="sig-rate">54.2%</td><td class="sig-lift" style="color:#2563eb">1.29x</td><td>14d+ dormant triple carrying from midday to evening</td></tr>
-        <tr><td class="sig-name">🧊 Freezing Triple</td><td><span class="st-badge badge-freezing" style="font-size:0.62rem;padding:1px 5px">Freezing</span></td><td class="sig-rate">48.2%</td><td class="sig-lift" style="color:#4338ca">1.15x</td><td>30d+ dormant triple resurfacing</td></tr>
-        <tr><td class="sig-name">🆕 New Triple</td><td><span class="st-badge badge-3dp" style="font-size:0.62rem;padding:1px 5px">🆕 New</span></td><td class="sig-rate">47.0%</td><td class="sig-lift" style="color:#2563eb">1.12x</td><td>First-ever appearance of this triple for the state</td></tr>
-      </table>
-      <p style="font-size:0.72rem;color:var(--fg-muted);margin:8px 0 0">3DP dormancy gradient is monotonic: Fresh (1d) 32.8% → Warm 35.0% → Cold 46.3% → Freezing (45d+) 51.1%. Anti-signal: 1-day fresh carries = 32.8% (0.78x).</p>
-
       <h4>Terms</h4>
       <div class="glossary-grid">
         <span class="g-tier">2DP</span>
-        <span class="g-desc">2-Digit Pair — any 2 of the 4 digits in a Pick 4 number, sorted ascending. Each number has C(4,2)=6 pairs.</span>
+        <span class="g-desc">2-Digit Pair — any 2 of 4 digits sorted ascending. C(4,2) = 6 per number.</span>
         <span class="g-tier">3DP</span>
-        <span class="g-desc">3-Digit Triple — any 3 of the 4 digits, sorted ascending. Each number has C(4,3)=4 triples. Narrower PL than 2DP.</span>
+        <span class="g-desc">3-Digit Triple — any 3 of 4 digits sorted ascending. C(4,3) = 4. Narrower PL.</span>
         <span class="g-tier">Carry</span>
-        <span class="g-desc">When a pair/triple from a recent draw appears in a later winner. 2DP uses same-day; 3DP uses a 3-day window.</span>
+        <span class="g-desc">Pair/triple from a recent draw appears in a later winner.</span>
+        <span class="g-tier">OC Rate</span>
+        <span class="g-desc">Only-Carrier rate — when this pair is the sole carrier. Higher = narrower PL.</span>
+        <span class="g-tier">Lift</span>
+        <span class="g-desc">How many times stronger than baseline (18.8%). 2.33x = 2.33× more likely.</span>
         <span class="g-tier">Heat14</span>
-        <span class="g-desc">How many times a pair appeared in that state's draws over the last 14 days. Heat14=0 means "cold" (unseen).</span>
-        <span class="g-tier">Only Carrier</span>
-        <span class="g-desc">When exactly one pair carried for a state — no dilution. Higher only-carrier rate = stronger signal.</span>
-        <span class="g-tier">PL</span>
-        <span class="g-desc">Prediction List — the set of numbers to play based on a signal. Click any pair to see its full PL.</span>
+        <span class="g-desc">Times a pair appeared in that state in the last 14 days. 0 = cold.</span>
+      </div>
+      <h4>Anti-Signals</h4>
+      <div class="glossary-grid">
+        <span class="g-tier" style="color:var(--miss)">Streak carry</span>
+        <span class="g-desc">0.89x lift — repeated carries are WEAKER than first-time</span>
+        <span class="g-tier" style="color:var(--miss)">Fresh 3DP (1d)</span>
+        <span class="g-desc">0.78x lift — 3DP from yesterday's draw is an anti-signal</span>
       </div>
     </div>
   </div>
@@ -550,6 +671,69 @@ function recencyBucket(daysAgo) {
   if (daysAgo <= 30) return '30d';
   if (daysAgo <= 60) return '60d';
   return 'none';
+}
+
+// ── LATEST SIGNALS FEED ──
+function renderLatestSignals() {
+  const el = document.getElementById('latest-signals');
+  if (!DATA.length) { el.innerHTML = ''; return; }
+  const t = DATA[DATA.length - 1];
+  const latestIdx = DATA.length - 1;
+
+  const signalStates = [];
+  for (const s of t.states) {
+    const badges = [];
+    if (s.cold_eve_signal) badges.push({ cls: 'badge-cold-eve', label: 'Cold+Eve', pairs: s.cold_eve_pairs || [] });
+    if (s.signal) badges.push({ cls: 'badge-signal', label: '⚡ Triple', pairs: [s.signal_pair] });
+    const hasFreezing2 = (s.carried || []).some(c => c.d != null && c.d >= 30);
+    if (hasFreezing2) {
+      const fp = (s.carried || []).filter(c => c.d >= 30).map(c => c.p);
+      badges.push({ cls: 'badge-freezing', label: 'Freezing', pairs: fp });
+    }
+    const hasCold2 = !s.cold_eve_signal && !hasFreezing2 && (s.carried || []).some(c => c.heat14 === 0);
+    if (hasCold2) {
+      const cp = (s.carried || []).filter(c => c.heat14 === 0).map(c => c.p);
+      badges.push({ cls: 'badge-cold-sig', label: '❄️ Cold', pairs: cp });
+    }
+    const hasFreeze3 = (s.carried_3dp || []).some(c => c.d != null && c.d >= 30);
+    if (hasFreeze3) {
+      const ft = (s.carried_3dp || []).filter(c => c.d >= 30).map(c => c.p);
+      badges.push({ cls: 'badge-freezing', label: '🧊 3DP Freezing', pairs: ft });
+    }
+    if (badges.length) signalStates.push({ state: s.state, badges });
+  }
+
+  if (!signalStates.length) {
+    el.innerHTML = `<div class="latest-signals-head">
+      <span class="ls-pulse"></span>
+      <span class="latest-signals-title">Latest: ${fmtDate(t.from_date)} → ${fmtDate(t.to_date)}</span>
+    </div><div class="ls-empty">No signals triggered on this transition.</div>`;
+    return;
+  }
+
+  let html = `<div class="latest-signals-head">
+    <span class="ls-pulse"></span>
+    <span class="latest-signals-title">Latest Signals</span>
+    <span class="latest-signals-date">${fmtDate(t.from_date)} → ${fmtDate(t.to_date)}</span>
+  </div><div class="ls-grid">`;
+
+  for (const ss of signalStates) {
+    const badgeHtml = ss.badges.map(b =>
+      `<span class="st-badge ${b.cls}" style="font-size:0.68rem;padding:2px 6px">${b.label}</span>` +
+      b.pairs.map(p => `<span class="ls-pair">${p}</span>`).join('')
+    ).join(' ');
+    html += `<div class="ls-row" data-latest-state="${ss.state}">
+      <span class="ls-state">${ss.state}</span>
+      <div class="ls-badges">${badgeHtml}</div>
+      <span style="color:var(--accent);font-size:0.72rem">→</span>
+    </div>`;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+
+  el.querySelectorAll('.ls-row').forEach(row => {
+    row.addEventListener('click', () => showDetail(latestIdx));
+  });
 }
 
 // ── CALENDAR VIEW ──
@@ -1255,6 +1439,7 @@ async function init() {
     document.getElementById('day-grid').innerHTML = '<p style="color:var(--miss)">Failed to load data.</p>';
     return;
   }
+  renderLatestSignals();
   const hash = location.hash.replace('#','');
   if (hash) {
     const idx = DATA.findIndex(t => t.from_date === hash);
