@@ -2,40 +2,41 @@ name: Update Carry Data
 
 on:
   schedule:
-    # After the preceding calendar day's western US final draws.
-    - cron: '30 8 * * *'
+    # Run daily at 6 AM UTC (1 AM EST / 10 PM PST)
+    # After all US evening draws have completed
+    - cron: '0 6 * * *'
   workflow_dispatch:
-
-permissions:
-  contents: write
-concurrency:
-  group: carry-saved-refresh
-  cancel-in-progress: false
 
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+
       - name: Install dependencies
         working-directory: scripts
         run: npm install
-      - name: Generate candidate with existing Carry method
+
+      - name: Generate carry data
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: node scripts/generate-carry-data.mjs
-      - name: Preserve history and gate saved publication
-        run: python3 refresh-publisher.py
-      - name: Commit saved artifacts and check status atomically
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git diff --quiet carry-data.json recent-draws.json index.html || echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push
+        if: steps.changes.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add carry-data.json recent-draws.json index.html saved-carry.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Refresh saved Carry data and coverage status"
-            git push
-          fi
+          DATE=$(date -u +%Y-%m-%d)
+          git add carry-data.json recent-draws.json index.html
+          git commit -m "Auto-update carry data for $DATE"
+          git push
