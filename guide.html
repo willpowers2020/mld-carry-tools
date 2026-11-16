@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2DP Carry Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #faf8f3;
+  --bg-card: #fff;
+  --bg-accent: #f0ece3;
+  --fg: #2c2416;
+  --fg-muted: #8a7e6b;
+  --fg-dim: #b5aa96;
+  --accent: #c45d1a;
+  --accent-bg: #fef3ec;
+  --green: #1a7a4a;
+  --green-bg: #eaf7f0;
+  --blue: #2563a0;
+  --blue-bg: #ebf2fa;
+  --red: #c43a3a;
+  --red-bg: #fdf0f0;
+  --purple: #7c3aed;
+  --purple-bg: #f3eefe;
+  --border: #e5dfd4;
+  --shadow: 0 1px 3px rgba(44,36,22,0.06);
+  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'DM Mono', 'SF Mono', 'Menlo', monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1a1714; --bg-card: #242018; --bg-accent: #2e2920;
+  --fg: #e8e0d0; --fg-muted: #9a8e7a; --fg-dim: #6a5f4f;
+  --accent: #e8793a; --accent-bg: #3a2718;
+  --green: #3db878; --green-bg: #1a2e22;
+  --blue: #5a9fd4; --blue-bg: #1a2636;
+  --red: #e05858; --red-bg: #361a1a;
+  --purple: #a78bfa; --purple-bg: #2a1f3e;
+  --border: #3a3428; --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  color-scheme: dark;
+}}
+:root[data-theme="dark"] {
+  --bg: #1a1714; --bg-card: #242018; --bg-accent: #2e2920;
+  --fg: #e8e0d0; --fg-muted: #9a8e7a; --fg-dim: #6a5f4f;
+  --accent: #e8793a; --accent-bg: #3a2718;
+  --green: #3db878; --green-bg: #1a2e22;
+  --blue: #5a9fd4; --blue-bg: #1a2636;
+  --red: #e05858; --red-bg: #361a1a;
+  --purple: #a78bfa; --purple-bg: #2a1f3e;
+  --border: #3a3428; --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+  line-height: 1.5;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.hero { padding: 2rem 0 1.5rem; }
+.hero-label {
+  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--fg-muted);
+  margin-bottom: 0.5rem;
+}
+.hero h1 {
+  font-size: 1.6rem; font-weight: 700; line-height: 1.2;
+  margin: 0 0 0.5rem; text-wrap: balance;
+}
+.hero p { color: var(--fg-muted); font-size: 0.9rem; max-width: 52ch; margin: 0; }
+
+.stat-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  margin: 1.5rem 0;
+}
+@media (max-width: 480px) { .stat-row { grid-template-columns: 1fr; } }
+.stat-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1.25rem;
+  box-shadow: var(--shadow);
+}
+.stat-card .stat-number {
+  font-size: 2.4rem; font-weight: 700; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.stat-card .stat-label {
+  font-size: 0.8rem; color: var(--fg-muted); margin-top: 0.25rem;
+}
+.stat-card .stat-sub {
+  font-size: 0.75rem; color: var(--fg-dim); margin-top: 0.5rem;
+  font-family: var(--font-mono);
+}
+.stat-card.accent { border-color: var(--accent); border-width: 2px; }
+.stat-card.accent .stat-number { color: var(--accent); }
+.stat-card.purple { border-color: var(--purple); border-width: 2px; }
+.stat-card.purple .stat-number { color: var(--purple); }
+.stat-card.green-b { border-color: var(--green); border-width: 2px; }
+.stat-card.green-b .stat-number { color: var(--green); }
+
+section { margin: 2rem 0; }
+section h2 {
+  font-size: 1.1rem; font-weight: 700; margin: 0 0 0.75rem;
+  text-wrap: balance;
+}
+section .section-sub {
+  color: var(--fg-muted); font-size: 0.85rem; margin: -0.5rem 0 1rem;
+}
+
+.bar-chart { display: flex; flex-direction: column; gap: 6px; }
+.bar-row {
+  display: grid; grid-template-columns: 80px 1fr 60px; gap: 8px;
+  align-items: center; font-size: 0.82rem;
+}
+.bar-row .bar-label { font-family: var(--font-mono); font-size: 0.78rem; color: var(--fg-muted); }
+.bar-track {
+  height: 28px; background: var(--bg-accent); border-radius: 6px;
+  overflow: hidden; position: relative;
+}
+.bar-fill {
+  height: 100%; border-radius: 6px;
+  display: flex; align-items: center; justify-content: flex-end;
+  padding-right: 8px; font-size: 0.72rem; font-weight: 600;
+  color: #fff; min-width: 2px;
+  transition: width 0.6s ease;
+}
+.bar-fill.carry { background: var(--blue); }
+.bar-fill.winner { background: var(--accent); }
+.bar-fill.hot { background: var(--green); }
+.bar-fill.purple { background: var(--purple); }
+.bar-row .bar-val {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  text-align: right; font-variant-numeric: tabular-nums;
+}
+
+.legend-inline {
+  display: flex; gap: 16px; margin-bottom: 10px; font-size: 0.75rem;
+}
+.legend-dot {
+  display: inline-block; width: 10px; height: 10px; border-radius: 3px;
+  margin-right: 4px; vertical-align: middle;
+}
+
+.insight {
+  background: var(--accent-bg); border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0; padding: 1rem 1.25rem;
+  margin: 1.25rem 0;
+}
+.insight strong { color: var(--accent); }
+.insight p { margin: 0; font-size: 0.88rem; }
+.insight.green { background: var(--green-bg); border-color: var(--green); }
+.insight.green strong { color: var(--green); }
+.insight.purple { background: var(--purple-bg); border-color: var(--purple); }
+.insight.purple strong { color: var(--purple); }
+
+.pairs-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 6px;
+}
+.pair-chip {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 0.6rem 0.5rem;
+  text-align: center; font-family: var(--font-mono);
+  box-shadow: var(--shadow);
+}
+.pair-chip .pair-digits { font-size: 1.3rem; font-weight: 700; }
+.pair-chip .pair-count {
+  font-size: 0.65rem; color: var(--fg-muted);
+  margin-top: 2px; font-family: var(--font-body);
+}
+.pair-chip .pair-bar {
+  height: 3px; background: var(--bg-accent); border-radius: 2px;
+  margin-top: 6px; overflow: hidden;
+}
+.pair-chip .pair-bar-fill {
+  height: 100%; background: var(--accent); border-radius: 2px;
+}
+
+.prox-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.prox-table th {
+  text-align: left; font-weight: 600; padding: 8px 10px;
+  border-bottom: 2px solid var(--border); font-size: 0.72rem;
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--fg-muted);
+}
+.prox-table td {
+  padding: 8px 10px; border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+.prox-table td:first-child { font-weight: 600; }
+.prox-table .lift { font-family: var(--font-mono); font-size: 0.8rem; }
+.lift-flat { color: var(--fg-dim); }
+.lift-hot { color: var(--green); font-weight: 600; }
+
+.bottom-pairs {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0.5rem;
+}
+.bp-chip {
+  background: var(--bg-accent); border-radius: 6px;
+  padding: 4px 10px; font-family: var(--font-mono);
+  font-size: 0.82rem; color: var(--fg-muted);
+}
+
+.takeaway {
+  background: var(--green-bg); border: 2px solid var(--green);
+  border-radius: 12px; padding: 1.5rem;
+  margin: 2rem 0;
+}
+.takeaway h3 { font-size: 1rem; font-weight: 700; color: var(--green); margin: 0 0 0.75rem; }
+.takeaway ol {
+  margin: 0; padding-left: 1.25rem;
+  font-size: 0.88rem; line-height: 1.7;
+}
+.takeaway ol li { margin-bottom: 0.25rem; }
+.takeaway .tk-note {
+  margin-top: 0.75rem; font-size: 0.78rem; color: var(--fg-muted);
+  font-style: italic;
+}
+
+.footer-note {
+  padding: 1.5rem 0 2rem; font-size: 0.72rem; color: var(--fg-dim);
+  text-align: center; border-top: 1px solid var(--border);
+  margin-top: 2rem;
+}
+
+/* Stacked filter table */
+.stack-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.stack-table th {
+  text-align: left; font-weight: 600; padding: 8px 10px;
+  border-bottom: 2px solid var(--border); font-size: 0.7rem;
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--fg-muted);
+}
+.stack-table td {
+  padding: 6px 10px; border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+.stack-table tr.best { background: var(--green-bg); }
+.stack-table .bar-cell { width: 100px; }
+.stack-table .mini-bar {
+  height: 18px; background: var(--bg-accent); border-radius: 4px;
+  overflow: hidden;
+}
+.stack-table .mini-fill {
+  height: 100%; border-radius: 4px;
+}
+
+/* State breakdown */
+.state-chips {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem;
+}
+.state-chip {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 12px; cursor: pointer;
+  font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600;
+  transition: all 0.15s; box-shadow: var(--shadow);
+  display: flex; align-items: center; gap: 6px;
+}
+.state-chip:hover { border-color: var(--accent); }
+.state-chip.active {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+}
+.state-chip .sc-pct {
+  font-size: 0.68rem; font-weight: 400; opacity: 0.7;
+  font-family: var(--font-body);
+}
+.state-chip.active .sc-pct { opacity: 0.9; }
+
+.state-detail {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.25rem; box-shadow: var(--shadow);
+  margin-top: 0.75rem;
+  animation: slideIn 0.2s ease;
+}
+@keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+.sd-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  flex-wrap: wrap; gap: 8px; margin-bottom: 1rem;
+}
+.sd-title { font-size: 1.1rem; font-weight: 700; }
+.sd-meta { font-size: 0.75rem; color: var(--fg-muted); font-family: var(--font-mono); }
+
+.sd-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px; margin-bottom: 1rem;
+}
+.sd-stat {
+  background: var(--bg-accent); border-radius: 8px; padding: 0.75rem;
+  text-align: center;
+}
+.sd-stat-num {
+  font-size: 1.5rem; font-weight: 700; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.sd-stat-num.accent { color: var(--accent); }
+.sd-stat-label { font-size: 0.7rem; color: var(--fg-muted); margin-top: 4px; }
+
+.sd-pairs-title { font-size: 0.82rem; font-weight: 600; margin-bottom: 0.5rem; }
+.sd-pairs-grid {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.sd-pair {
+  background: var(--bg-accent); border-radius: 8px; padding: 8px 12px;
+  text-align: center; font-family: var(--font-mono); min-width: 60px;
+}
+.sd-pair-digits { font-size: 1.1rem; font-weight: 700; }
+.sd-pair-count { font-size: 0.65rem; color: var(--fg-muted); font-family: var(--font-body); }
+.sd-pair-bar {
+  height: 3px; background: var(--border); border-radius: 2px;
+  margin-top: 4px; overflow: hidden;
+}
+.sd-pair-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+
+.state-sort {
+  display: flex; gap: 6px; margin-bottom: 0.75rem; font-size: 0.75rem;
+}
+.sort-btn {
+  background: var(--bg-accent); border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 10px; cursor: pointer;
+  font-family: var(--font-body); font-size: 0.72rem; color: var(--fg-muted);
+}
+.sort-btn.active { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+#state-detail-container:empty::after {
+  content: 'Click a state above to see its breakdown';
+  display: block; text-align: center; padding: 2rem;
+  color: var(--fg-dim); font-size: 0.85rem;
+}
+
+/* Dormancy fine chart */
+.dorm-fine { display: grid; grid-template-columns: 50px 1fr 50px 40px; gap: 4px 8px; align-items: center; font-size: 0.78rem; }
+.dorm-fine .dl { font-family: var(--font-mono); color: var(--fg-muted); text-align: right; }
+.dorm-fine .dt { height: 22px; background: var(--bg-accent); border-radius: 4px; overflow: hidden; }
+.dorm-fine .df { height: 100%; border-radius: 4px; }
+.dorm-fine .dv { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.dorm-fine .dx { font-family: var(--font-mono); font-size: 0.72rem; }
+</style>
+
+<div class="hero">
+  <div class="hero-label">MyLottoData Research</div>
+  <h1>Which 2DP Should You Play?</h1>
+  <p>75 days of Pick 4 data across all states. Three signals stack into a 57.9% win rate filter.</p>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card accent">
+    <div class="stat-number">57.9%</div>
+    <div class="stat-label">Best stacked filter win rate</div>
+    <div class="stat-sub">Singles + Only carrier + 15d+ dormancy</div>
+  </div>
+  <div class="stat-card purple">
+    <div class="stat-number">54.9%</div>
+    <div class="stat-label">"Only carrier" signal alone</div>
+    <div class="stat-sub">1,764 events &middot; 1.17x lift</div>
+  </div>
+</div>
+<div class="stat-row">
+  <div class="stat-card green-b">
+    <div class="stat-number">54.9%</div>
+    <div class="stat-label">Dormancy 15d+ win rate</div>
+    <div class="stat-sub">vs 45.4% for 1-3d dormancy</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">11,244</div>
+    <div class="stat-label">Total carried pairs analyzed</div>
+    <div class="stat-sub">37 states &middot; 2,696 transitions</div>
+  </div>
+</div>
+
+<div class="insight purple">
+  <p><strong>Your CA pair 68 hit all three:</strong> Singles source (6813), only carried pair that day, 15 days dormant. That's the strongest possible signal — 57.9% win rate.</p>
+</div>
+
+<!-- SIGNAL 1: Dormancy Fine -->
+<section>
+  <h2>Signal 1: Dormancy Days</h2>
+  <p class="section-sub">The longer a pair was dormant before carry, the more likely it's in the winner</p>
+
+  <div class="dorm-fine" id="dorm-fine"></div>
+
+  <div class="insight green">
+    <p><strong>8+ days dormancy = 50%+ win rate.</strong> Pairs dormant 1-3 days win only 45%. At 11+ days: 51-55%. At 15+ days: 53-55%. This is a clear, graded signal — not flat like we initially thought.</p>
+  </div>
+</section>
+
+<!-- SIGNAL 2: Only Carrier -->
+<section>
+  <h2>Signal 2: "Only Carrier" Days</h2>
+  <p class="section-sub">When exactly one 2DP carries between consecutive days, it wins 54.9% of the time</p>
+
+  <div class="stat-row" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="stat-card" style="text-align:center">
+      <div class="stat-number" style="font-size:1.8rem;color:var(--purple)">54.9%</div>
+      <div class="stat-label">Only 1 carrier</div>
+      <div class="stat-sub">1,764 events</div>
+    </div>
+    <div class="stat-card" style="text-align:center">
+      <div class="stat-number" style="font-size:1.8rem">46.5%</div>
+      <div class="stat-label">Above avg dorm</div>
+      <div class="stat-sub">4,342 events</div>
+    </div>
+    <div class="stat-card" style="text-align:center">
+      <div class="stat-number" style="font-size:1.8rem">44.5%</div>
+      <div class="stat-label">Below avg dorm</div>
+      <div class="stat-sub">5,138 events</div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <p><strong>When there's exactly one carried pair, there's no ambiguity.</strong> You don't have to pick between most/middle/least dormant — there's only one choice, and it wins 55% of the time. Look for these days.</p>
+  </div>
+</section>
+
+<!-- SIGNAL 3: Source Draw Pattern -->
+<section>
+  <h2>Signal 3: Source Draw Pattern</h2>
+  <p class="section-sub">Does a Singles (ABCD) source carry more reliably than Doubles (AABC)?</p>
+
+  <div class="bar-chart">
+    <div class="bar-row">
+      <span class="bar-label">Singles</span>
+      <div class="bar-track"><div class="bar-fill hot" style="width:68.7%">68.7%</div></div>
+      <span class="bar-val">2,825</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">Doubles</span>
+      <div class="bar-track"><div class="bar-fill carry" style="width:52.1%">52.1%</div></div>
+      <span class="bar-val">2,525</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">Dbl-Dbl</span>
+      <div class="bar-track"><div class="bar-fill carry" style="width:40.3%">40.3%</div></div>
+      <span class="bar-val">139</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">Triples</span>
+      <div class="bar-track"><div class="bar-fill carry" style="width:28.9%">28.9%</div></div>
+      <span class="bar-val">190</span>
+    </div>
+  </div>
+
+  <div class="insight green">
+    <p><strong>Singles draws carry 68.7%</strong> — 6 unique 2DPs vs 4 for Doubles. More unique pairs = more carry surface. This is the carry rate filter, not the winner-in-PL filter. The dormancy and only-carrier signals select WHICH carried pair is the winner.</p>
+  </div>
+</section>
+
+<!-- STACKED FILTERS -->
+<section>
+  <h2>Stacked Filters: Where Signals Combine</h2>
+  <p class="section-sub">Each signal gives ~5-17% lift alone. Stack them for up to 23% lift.</p>
+
+  <div style="overflow-x:auto">
+  <table class="stack-table">
+    <thead>
+      <tr><th>Filter</th><th>Carries</th><th>Win %</th><th>Lift</th><th class="bar-cell">Signal</th></tr>
+    </thead>
+    <tbody id="stack-body"></tbody>
+  </table>
+  </div>
+
+  <div class="insight purple">
+    <p><strong>Singles + Only carrier + 15d+ dormancy = 57.9%</strong> (1.23x lift over baseline). That's 197 events across 75 days — enough sample to trust. The three signals are independent and stack cleanly.</p>
+  </div>
+</section>
+
+<!-- WHAT DOESN'T MATTER -->
+<section>
+  <h2>What Doesn't Matter</h2>
+  <p class="section-sub">12 parameters tested. Most showed zero signal.</p>
+
+  <div style="overflow-x:auto">
+  <table class="prox-table">
+    <thead>
+      <tr><th>Parameter</th><th>Finding</th><th>Lift</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Digit sum (e.g., 6+8=14)</td>
+        <td>Flat from 0 through 18</td>
+        <td class="lift lift-flat">0.95-1.04x</td>
+      </tr>
+      <tr>
+        <td>Digit product</td>
+        <td>Mostly flat; product=1 and 40 slightly high but small samples</td>
+        <td class="lift lift-flat">0.89-1.13x</td>
+      </tr>
+      <tr>
+        <td>Digit gap / proximity</td>
+        <td>Adjacent, close, distant all equal; gap=9 slight lift</td>
+        <td class="lift lift-flat">0.98-1.07x</td>
+      </tr>
+      <tr>
+        <td>Even/Odd composition</td>
+        <td>EE, EO, OE, OO all 46-48%</td>
+        <td class="lift lift-flat">0.98-1.01x</td>
+      </tr>
+      <tr>
+        <td>High/Low (0-4 vs 5-9)</td>
+        <td>HH, LH, LL all 46.7-47.3%</td>
+        <td class="lift lift-flat">1.00-1.01x</td>
+      </tr>
+      <tr>
+        <td>Double-digit pairs (00, 11...)</td>
+        <td>Same rate as mixed pairs</td>
+        <td class="lift lift-flat">0.98x</td>
+      </tr>
+      <tr>
+        <td>Dormancy rank (most/mid/least)</td>
+        <td>Equal at ~52% when 2+ carriers</td>
+        <td class="lift lift-flat">0.99-1.01x</td>
+      </tr>
+      <tr>
+        <td>Dormancy even/odd days</td>
+        <td>No pattern</td>
+        <td class="lift lift-flat">1.00x</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- DORMANCY FINE DETAIL -->
+<section>
+  <h2>Dormancy by Day: The Gradient</h2>
+  <p class="section-sub">Win rate for each specific dormancy day count. The lift becomes visible at day 5 and grows steadily.</p>
+
+  <div style="overflow-x:auto">
+  <table class="prox-table">
+    <thead>
+      <tr><th>Days</th><th>Carries</th><th>Win Rate</th><th>Lift</th></tr>
+    </thead>
+    <tbody id="dorm-detail"></tbody>
+  </table>
+  </div>
+</section>
+
+<!-- TOP 15 PAIRS -->
+<section>
+  <h2>Top 15 Most Frequently Carried Pairs</h2>
+  <p class="section-sub">Sep 1 – Nov 14, 2026 across all states</p>
+  <div class="pairs-grid" id="pairs-grid"></div>
+</section>
+
+<!-- LEAST CARRIED -->
+<section>
+  <h2>Least Carried: Double-Digit Pairs</h2>
+  <p class="section-sub">Pairs where both digits are the same carry ~3x less frequently</p>
+  <div class="bottom-pairs">
+    <span class="bp-chip">00 <small style="color:var(--fg-dim)">32</small></span>
+    <span class="bp-chip">11 <small style="color:var(--fg-dim)">45</small></span>
+    <span class="bp-chip">22 <small style="color:var(--fg-dim)">33</small></span>
+    <span class="bp-chip">33 <small style="color:var(--fg-dim)">39</small></span>
+    <span class="bp-chip">44 <small style="color:var(--fg-dim)">30</small></span>
+    <span class="bp-chip">55 <small style="color:var(--fg-dim)">30</small></span>
+    <span class="bp-chip">66 <small style="color:var(--fg-dim)">25</small></span>
+    <span class="bp-chip">77 <small style="color:var(--fg-dim)">25</small></span>
+    <span class="bp-chip">88 <small style="color:var(--fg-dim)">30</small></span>
+    <span class="bp-chip">99 <small style="color:var(--fg-dim)">32</small></span>
+  </div>
+</section>
+
+<!-- STATE BREAKDOWN -->
+<section>
+  <h2>State-by-State Breakdown</h2>
+  <p class="section-sub">Click a state to see its signal strength and top carried pairs</p>
+
+  <div class="state-sort">
+    <button class="sort-btn active" data-sort="alpha">A-Z</button>
+    <button class="sort-btn" data-sort="signal">Best Signal</button>
+    <button class="sort-btn" data-sort="carries">Most Carries</button>
+  </div>
+  <div class="state-chips" id="state-chips"></div>
+  <div id="state-detail-container"></div>
+</section>
+
+<!-- TAKEAWAY -->
+<div class="takeaway">
+  <h3>How to Pick Your 2DP</h3>
+  <ol>
+    <li><strong>Check the source draw pattern.</strong> Was yesterday's draw Singles (ABCD)? If yes, carry rate is 68.7%.</li>
+    <li><strong>Count carried pairs.</strong> If only 1 pair carried, that's your best signal — 54.9% win rate.</li>
+    <li><strong>Check dormancy.</strong> If the carried pair was dormant 8+ days, even better — 50%+. At 15+ days: 55%+.</li>
+    <li><strong>When all three stack</strong> (Singles source + only carrier + 15d+ dormancy), you're at <strong>57.9%</strong>.</li>
+    <li>Open the 4DP Explorer for your chosen pair, filter to ≤10d cross-state recency, that's your PL.</li>
+  </ol>
+  <p class="tk-note">Based on 11,244 carried pairs across 37 Pick 4 states, Sep 1 – Nov 14, 2026. CA pair 68 (Nov 1→2) matched all three criteria: Singles source 6813, only carrier, 15d dormant.</p>
+</div>
+
+<div class="footer-note">
+  2DP Carry Analysis &middot; 11,244 carried pairs &middot; 2,696 transitions &middot; 37 states &middot; Sep 1 – Nov 14, 2026
+</div>
+
+<script>
+const STATE_NAMES = {ar:'Arkansas',az:'Arizona',ca:'California',ct:'Connecticut',dc:'DC',de:'Delaware',fl:'Florida',ga:'Georgia',ia:'Iowa',id:'Idaho',il:'Illinois',in:'Indiana',ky:'Kentucky',la:'Louisiana',ma:'Massachusetts',md:'Maryland',me:'Maine',mi:'Michigan',mo:'Missouri',ms:'Mississippi',nc:'North Carolina',ne:'Nebraska',nh:'New Hampshire',nj:'New Jersey',nm:'New Mexico',ny:'New York',oh:'Ohio',or:'Oregon',pa:'Pennsylvania',ri:'Rhode Island',sc:'South Carolina',tn:'Tennessee',tx:'Texas',va:'Virginia',vt:'Vermont',wa:'Washington',wi:'Wisconsin',wv:'West Virginia'};
+
+const STATE_DATA = {"va":{"transitions":74,"draws":212,"carries":120,"avgCarries":1.6,"mostDormantPct":36.8,"top3DormantPct":47.6,"topPairs":[{"pair":"14","carries":6},{"pair":"48","carries":6},{"pair":"01","carries":5},{"pair":"08","carries":5},{"pair":"18","carries":4},{"pair":"38","carries":4},{"pair":"56","carries":4},{"pair":"68","carries":4},{"pair":"78","carries":4},{"pair":"07","carries":4}]},"tx":{"transitions":54,"draws":215,"carries":288,"avgCarries":5.3,"mostDormantPct":27.9,"top3DormantPct":55.8,"topPairs":[{"pair":"07","carries":13},{"pair":"17","carries":12},{"pair":"09","carries":12},{"pair":"79","carries":11},{"pair":"04","carries":11},{"pair":"39","carries":9},{"pair":"24","carries":8},{"pair":"25","carries":8},{"pair":"27","carries":8},{"pair":"37","carries":8}]},"id":{"transitions":74,"draws":213,"carries":130,"avgCarries":1.8,"mostDormantPct":41.3,"top3DormantPct":57.3,"topPairs":[{"pair":"27","carries":7},{"pair":"03","carries":7},{"pair":"89","carries":6},{"pair":"34","carries":5},{"pair":"08","carries":5},{"pair":"01","carries":5},{"pair":"18","carries":4},{"pair":"35","carries":4},{"pair":"38","carries":4},{"pair":"47","carries":4}]},"ga":{"transitions":74,"draws":161,"carries":134,"avgCarries":1.8,"mostDormantPct":45.3,"top3DormantPct":61.5,"topPairs":[{"pair":"46","carries":6},{"pair":"14","carries":5},{"pair":"23","carries":5},{"pair":"37","carries":5},{"pair":"39","carries":5},{"pair":"57","carries":5},{"pair":"06","carries":5},{"pair":"13","carries":4},{"pair":"15","carries":4},{"pair":"17","carries":4}]},"de":{"transitions":74,"draws":210,"carries":123,"avgCarries":1.7,"mostDormantPct":39.5,"top3DormantPct":57.1,"topPairs":[{"pair":"02","carries":9},{"pair":"38","carries":8},{"pair":"09","carries":6},{"pair":"12","carries":5},{"pair":"44","carries":5},{"pair":"13","carries":4},{"pair":"14","carries":4},{"pair":"15","carries":4},{"pair":"45","carries":4},{"pair":"58","carries":4}]},"ct":{"transitions":74,"draws":219,"carries":118,"avgCarries":1.6,"mostDormantPct":44.3,"top3DormantPct":54.8,"topPairs":[{"pair":"69","carries":7},{"pair":"35","carries":6},{"pair":"36","carries":6},{"pair":"16","carries":5},{"pair":"17","carries":5},{"pair":"49","carries":5},{"pair":"07","carries":5},{"pair":"23","carries":4},{"pair":"15","carries":3},{"pair":"18","carries":3}]},"in":{"transitions":74,"draws":147,"carries":123,"avgCarries":1.7,"mostDormantPct":44.2,"top3DormantPct":57.8,"topPairs":[{"pair":"18","carries":9},{"pair":"14","carries":5},{"pair":"27","carries":5},{"pair":"37","carries":5},{"pair":"48","carries":5},{"pair":"58","carries":5},{"pair":"89","carries":5},{"pair":"28","carries":4},{"pair":"46","carries":4},{"pair":"06","carries":4}]},"ca":{"transitions":74,"draws":84,"carries":48,"avgCarries":0.6,"mostDormantPct":44.0,"top3DormantPct":44.0,"topPairs":[{"pair":"17","carries":4},{"pair":"18","carries":4},{"pair":"23","carries":4},{"pair":"24","carries":4},{"pair":"02","carries":4},{"pair":"11","carries":2},{"pair":"58","carries":2},{"pair":"78","carries":2},{"pair":"06","carries":2},{"pair":"22","carries":1}]},"vt":{"transitions":74,"draws":148,"carries":132,"avgCarries":1.8,"mostDormantPct":41.9,"top3DormantPct":54.1,"topPairs":[{"pair":"14","carries":6},{"pair":"17","carries":6},{"pair":"47","carries":6},{"pair":"06","carries":6},{"pair":"35","carries":5},{"pair":"02","carries":5},{"pair":"23","carries":4},{"pair":"36","carries":4},{"pair":"67","carries":4},{"pair":"09","carries":4}]},"tn":{"transitions":74,"draws":202,"carries":197,"avgCarries":2.7,"mostDormantPct":37.1,"top3DormantPct":56.9,"topPairs":[{"pair":"16","carries":10},{"pair":"69","carries":9},{"pair":"17","carries":7},{"pair":"18","carries":6},{"pair":"26","carries":6},{"pair":"29","carries":6},{"pair":"46","carries":6},{"pair":"59","carries":6},{"pair":"06","carries":6},{"pair":"02","carries":6}]},"pa":{"transitions":74,"draws":148,"carries":120,"avgCarries":1.6,"mostDormantPct":45.3,"top3DormantPct":58.8,"topPairs":[{"pair":"38","carries":7},{"pair":"68","carries":7},{"pair":"39","carries":6},{"pair":"25","carries":5},{"pair":"58","carries":5},{"pair":"89","carries":5},{"pair":"09","carries":5},{"pair":"17","carries":4},{"pair":"36","carries":4},{"pair":"56","carries":4}]},"dc":{"transitions":74,"draws":148,"carries":118,"avgCarries":1.6,"mostDormantPct":42.6,"top3DormantPct":57.4,"topPairs":[{"pair":"37","carries":7},{"pair":"23","carries":5},{"pair":"14","carries":4},{"pair":"17","carries":4},{"pair":"25","carries":4},{"pair":"39","carries":4},{"pair":"45","carries":4},{"pair":"59","carries":4},{"pair":"78","carries":4},{"pair":"79","carries":4}]},"md":{"transitions":74,"draws":148,"carries":113,"avgCarries":1.5,"mostDormantPct":43.2,"top3DormantPct":55.4,"topPairs":[{"pair":"28","carries":7},{"pair":"29","carries":7},{"pair":"79","carries":7},{"pair":"08","carries":6},{"pair":"01","carries":5},{"pair":"12","carries":4},{"pair":"18","carries":4},{"pair":"13","carries":3},{"pair":"22","carries":3},{"pair":"38","carries":3}]},"or":{"transitions":74,"draws":295,"carries":397,"avgCarries":5.4,"mostDormantPct":28.1,"top3DormantPct":62.0,"topPairs":[{"pair":"01","carries":16},{"pair":"38","carries":15},{"pair":"59","carries":14},{"pair":"89","carries":14},{"pair":"12","carries":13},{"pair":"78","carries":13},{"pair":"36","carries":12},{"pair":"02","carries":12},{"pair":"03","carries":12},{"pair":"13","carries":10}]},"nj":{"transitions":74,"draws":147,"carries":123,"avgCarries":1.7,"mostDormantPct":40.1,"top3DormantPct":50.3,"topPairs":[{"pair":"07","carries":9},{"pair":"09","carries":8},{"pair":"69","carries":7},{"pair":"37","carries":6},{"pair":"47","carries":5},{"pair":"48","carries":5},{"pair":"67","carries":5},{"pair":"78","carries":5},{"pair":"18","carries":4},{"pair":"39","carries":4}]},"ia":{"transitions":74,"draws":147,"carries":119,"avgCarries":1.6,"mostDormantPct":44.2,"top3DormantPct":59.9,"topPairs":[{"pair":"39","carries":7},{"pair":"09","carries":6},{"pair":"25","carries":5},{"pair":"34","carries":4},{"pair":"46","carries":4},{"pair":"03","carries":4},{"pair":"17","carries":3},{"pair":"19","carries":3},{"pair":"24","carries":3},{"pair":"28","carries":3}]},"sc":{"transitions":74,"draws":138,"carries":105,"avgCarries":1.4,"mostDormantPct":39.1,"top3DormantPct":50.7,"topPairs":[{"pair":"17","carries":6},{"pair":"49","carries":5},{"pair":"69","carries":5},{"pair":"01","carries":5},{"pair":"56","carries":4},{"pair":"05","carries":4},{"pair":"03","carries":4},{"pair":"04","carries":4},{"pair":"16","carries":3},{"pair":"26","carries":3}]},"ri":{"transitions":74,"draws":148,"carries":122,"avgCarries":1.6,"mostDormantPct":43.9,"top3DormantPct":54.1,"topPairs":[{"pair":"68","carries":8},{"pair":"18","carries":6},{"pair":"36","carries":6},{"pair":"03","carries":5},{"pair":"13","carries":4},{"pair":"17","carries":4},{"pair":"19","carries":4},{"pair":"29","carries":4},{"pair":"34","carries":4},{"pair":"49","carries":4}]},"ny":{"transitions":74,"draws":147,"carries":105,"avgCarries":1.4,"mostDormantPct":38.8,"top3DormantPct":52.4,"topPairs":[{"pair":"26","carries":7},{"pair":"46","carries":5},{"pair":"04","carries":5},{"pair":"14","carries":4},{"pair":"38","carries":4},{"pair":"68","carries":4},{"pair":"78","carries":4},{"pair":"18","carries":3},{"pair":"34","carries":3},{"pair":"36","carries":3}]},"nm":{"transitions":74,"draws":147,"carries":122,"avgCarries":1.6,"mostDormantPct":42.9,"top3DormantPct":59.2,"topPairs":[{"pair":"67","carries":8},{"pair":"27","carries":7},{"pair":"28","carries":6},{"pair":"17","carries":5},{"pair":"19","carries":5},{"pair":"57","carries":5},{"pair":"06","carries":5},{"pair":"26","carries":4},{"pair":"37","carries":4},{"pair":"47","carries":4}]},"nc":{"transitions":74,"draws":148,"carries":121,"avgCarries":1.6,"mostDormantPct":43.9,"top3DormantPct":54.1,"topPairs":[{"pair":"67","carries":7},{"pair":"78","carries":7},{"pair":"06","carries":6},{"pair":"25","carries":5},{"pair":"02","carries":5},{"pair":"07","carries":5},{"pair":"12","carries":4},{"pair":"19","carries":4},{"pair":"27","carries":4},{"pair":"59","carries":4}]},"ms":{"transitions":74,"draws":147,"carries":123,"avgCarries":1.7,"mostDormantPct":41.5,"top3DormantPct":57.1,"topPairs":[{"pair":"13","carries":13},{"pair":"18","carries":7},{"pair":"15","carries":5},{"pair":"16","carries":5},{"pair":"79","carries":5},{"pair":"01","carries":5},{"pair":"12","carries":4},{"pair":"17","carries":4},{"pair":"02","carries":4},{"pair":"05","carries":4}]},"mi":{"transitions":74,"draws":148,"carries":124,"avgCarries":1.7,"mostDormantPct":41.2,"top3DormantPct":56.8,"topPairs":[{"pair":"46","carries":8},{"pair":"37","carries":7},{"pair":"01","carries":6},{"pair":"13","carries":5},{"pair":"18","carries":5},{"pair":"05","carries":5},{"pair":"06","carries":5},{"pair":"12","carries":4},{"pair":"17","carries":4},{"pair":"34","carries":4}]},"ar":{"transitions":74,"draws":138,"carries":113,"avgCarries":1.5,"mostDormantPct":44.9,"top3DormantPct":56.5,"topPairs":[{"pair":"27","carries":7},{"pair":"19","carries":6},{"pair":"17","carries":5},{"pair":"25","carries":5},{"pair":"57","carries":5},{"pair":"09","carries":5},{"pair":"56","carries":4},{"pair":"05","carries":4},{"pair":"08","carries":4},{"pair":"02","carries":4}]},"wi":{"transitions":74,"draws":148,"carries":136,"avgCarries":1.8,"mostDormantPct":45.3,"top3DormantPct":59.5,"topPairs":[{"pair":"59","carries":7},{"pair":"26","carries":6},{"pair":"36","carries":6},{"pair":"45","carries":6},{"pair":"67","carries":6},{"pair":"19","carries":5},{"pair":"23","carries":5},{"pair":"37","carries":5},{"pair":"57","carries":5},{"pair":"69","carries":5}]},"mo":{"transitions":74,"draws":148,"carries":129,"avgCarries":1.7,"mostDormantPct":45.3,"top3DormantPct":60.1,"topPairs":[{"pair":"28","carries":8},{"pair":"48","carries":7},{"pair":"26","carries":6},{"pair":"06","carries":6},{"pair":"08","carries":6},{"pair":"24","carries":5},{"pair":"49","carries":5},{"pair":"78","carries":5},{"pair":"19","carries":4},{"pair":"45","carries":4}]},"fl":{"transitions":74,"draws":148,"carries":134,"avgCarries":1.8,"mostDormantPct":41.9,"top3DormantPct":54.1,"topPairs":[{"pair":"08","carries":10},{"pair":"89","carries":6},{"pair":"19","carries":5},{"pair":"28","carries":5},{"pair":"57","carries":5},{"pair":"09","carries":5},{"pair":"13","carries":4},{"pair":"18","carries":4},{"pair":"25","carries":4},{"pair":"35","carries":4}]},"me":{"transitions":74,"draws":148,"carries":132,"avgCarries":1.8,"mostDormantPct":41.9,"top3DormantPct":54.1,"topPairs":[{"pair":"14","carries":6},{"pair":"17","carries":6},{"pair":"47","carries":6},{"pair":"06","carries":6},{"pair":"35","carries":5},{"pair":"02","carries":5},{"pair":"23","carries":4},{"pair":"36","carries":4},{"pair":"67","carries":4},{"pair":"09","carries":4}]},"ky":{"transitions":74,"draws":147,"carries":117,"avgCarries":1.6,"mostDormantPct":42.2,"top3DormantPct":53.7,"topPairs":[{"pair":"45","carries":7},{"pair":"15","carries":6},{"pair":"19","carries":6},{"pair":"38","carries":5},{"pair":"39","carries":5},{"pair":"25","carries":4},{"pair":"56","carries":4},{"pair":"57","carries":4},{"pair":"01","carries":4},{"pair":"05","carries":4}]},"il":{"transitions":74,"draws":147,"carries":132,"avgCarries":1.8,"mostDormantPct":42.2,"top3DormantPct":54.4,"topPairs":[{"pair":"23","carries":7},{"pair":"28","carries":7},{"pair":"68","carries":7},{"pair":"03","carries":7},{"pair":"14","carries":5},{"pair":"67","carries":5},{"pair":"02","carries":5},{"pair":"15","carries":4},{"pair":"29","carries":4},{"pair":"36","carries":4}]},"la":{"transitions":74,"draws":84,"carries":56,"avgCarries":0.8,"mostDormantPct":45.2,"top3DormantPct":45.2,"topPairs":[{"pair":"78","carries":5},{"pair":"59","carries":4},{"pair":"09","carries":4},{"pair":"26","carries":3},{"pair":"68","carries":3},{"pair":"79","carries":3},{"pair":"12","carries":2},{"pair":"17","carries":2},{"pair":"19","carries":2},{"pair":"23","carries":2}]},"oh":{"transitions":74,"draws":148,"carries":116,"avgCarries":1.6,"mostDormantPct":41.2,"top3DormantPct":54.7,"topPairs":[{"pair":"17","carries":6},{"pair":"19","carries":6},{"pair":"25","carries":5},{"pair":"78","carries":5},{"pair":"09","carries":5},{"pair":"27","carries":4},{"pair":"58","carries":4},{"pair":"69","carries":4},{"pair":"99","carries":4},{"pair":"05","carries":4}]},"ma":{"transitions":74,"draws":148,"carries":131,"avgCarries":1.8,"mostDormantPct":40.5,"top3DormantPct":54.7,"topPairs":[{"pair":"08","carries":10},{"pair":"48","carries":7},{"pair":"69","carries":7},{"pair":"25","carries":5},{"pair":"89","carries":5},{"pair":"26","carries":4},{"pair":"36","carries":4},{"pair":"37","carries":4},{"pair":"05","carries":4},{"pair":"09","carries":4}]},"az":{"transitions":49,"draws":98,"carries":88,"avgCarries":1.8,"mostDormantPct":48.0,"top3DormantPct":58.2,"topPairs":[{"pair":"46","carries":4},{"pair":"03","carries":4},{"pair":"13","carries":3},{"pair":"16","carries":3},{"pair":"25","carries":3},{"pair":"27","carries":3},{"pair":"29","carries":3},{"pair":"39","carries":3},{"pair":"56","carries":3},{"pair":"79","carries":3}]},"nh":{"transitions":74,"draws":148,"carries":132,"avgCarries":1.8,"mostDormantPct":41.9,"top3DormantPct":54.1,"topPairs":[{"pair":"14","carries":6},{"pair":"17","carries":6},{"pair":"47","carries":6},{"pair":"06","carries":6},{"pair":"35","carries":5},{"pair":"02","carries":5},{"pair":"23","carries":4},{"pair":"36","carries":4},{"pair":"67","carries":4},{"pair":"09","carries":4}]},"wv":{"transitions":54,"draws":63,"carries":17,"avgCarries":0.3,"mostDormantPct":27.0,"top3DormantPct":27.0,"topPairs":[{"pair":"45","carries":2},{"pair":"78","carries":2},{"pair":"12","carries":1},{"pair":"13","carries":1},{"pair":"15","carries":1},{"pair":"23","carries":1},{"pair":"37","carries":1},{"pair":"38","carries":1},{"pair":"56","carries":1},{"pair":"68","carries":1}]},"ne":{"transitions":48,"draws":48,"carries":17,"avgCarries":0.4,"mostDormantPct":22.9,"top3DormantPct":22.9,"topPairs":[{"pair":"14","carries":3},{"pair":"34","carries":2},{"pair":"13","carries":1},{"pair":"17","carries":1},{"pair":"28","carries":1},{"pair":"36","carries":1},{"pair":"39","carries":1},{"pair":"46","carries":1},{"pair":"48","carries":1},{"pair":"58","carries":1}]}};
+
+const TOP_PAIRS = [
+  {pair:'17',carries:129},{pair:'09',carries:119},{pair:'03',carries:116},
+  {pair:'07',carries:115},{pair:'06',carries:114},{pair:'08',carries:112},
+  {pair:'78',carries:111},{pair:'02',carries:111},{pair:'38',carries:110},
+  {pair:'37',carries:106},{pair:'36',carries:105},{pair:'89',carries:105},
+  {pair:'01',carries:105},{pair:'46',carries:103},{pair:'23',carries:102}
+];
+
+// ====== DORMANCY FINE CHART ======
+const DORM_FINE = [
+  {d:'1d',c:2367,r:45.7},{d:'2d',c:1835,r:45.1},{d:'3d',c:1285,r:45.1},
+  {d:'4d',c:1092,r:46.0},{d:'5d',c:786,r:47.2},{d:'6d',c:663,r:46.8},
+  {d:'7d',c:493,r:47.1},{d:'8d',c:380,r:50.5},{d:'9d',c:323,r:47.4},
+  {d:'10d',c:260,r:48.5},{d:'11d',c:204,r:52.9},{d:'12d',c:141,r:51.8},
+  {d:'13d',c:99,r:50.5},{d:'14d',c:90,r:54.4},{d:'15d',c:71,r:54.9},
+  {d:'15d+',c:424,r:53.3},{d:'new',c:731,r:48.4}
+];
+const baseRate = 46.9;
+
+const fineEl = document.getElementById('dorm-fine');
+DORM_FINE.forEach(({d,c,r}) => {
+  const lift = (r/baseRate).toFixed(2);
+  const isHot = r >= 50;
+  const color = isHot ? 'var(--green)' : 'var(--blue)';
+  const w = Math.max(2, r / 60 * 100);
+  fineEl.innerHTML += `
+    <span class="dl">${d}</span>
+    <div class="dt"><div class="df" style="width:${w}%;background:${color}"></div></div>
+    <span class="dv" style="color:${isHot?'var(--green)':'var(--fg-muted)'}">${r}%</span>
+    <span class="dx" style="color:${isHot?'var(--green)':'var(--fg-dim)'}">${lift}x</span>
+  `;
+});
+
+// ====== DORMANCY DETAIL TABLE ======
+const dormDetail = document.getElementById('dorm-detail');
+DORM_FINE.forEach(({d,c,r}) => {
+  const lift = (r/baseRate);
+  const cls = lift >= 1.07 ? 'lift-hot' : 'lift-flat';
+  dormDetail.innerHTML += `<tr${lift>=1.07?' class="best"':''}>
+    <td style="font-family:var(--font-mono)">${d}</td>
+    <td>${c.toLocaleString()}</td>
+    <td style="font-weight:${lift>=1.07?'700':'400'}">${r}%</td>
+    <td class="lift ${cls}">${lift.toFixed(2)}x</td>
+  </tr>`;
+});
+
+// ====== STACKED FILTER TABLE ======
+const STACKED = [
+  {f:'All carried pairs',c:11244,r:46.9},
+  {f:'Dormancy >= 8d',c:2723,r:50.3},
+  {f:'Dormancy >= 11d',c:1760,r:51.1},
+  {f:'Dormancy >= 15d',c:1226,r:50.5},
+  {f:'Only 1 carrier',c:1764,r:54.9},
+  {f:'Only + Dorm >= 8d',c:572,r:54.9},
+  {f:'Only + Dorm >= 11d',c:390,r:56.2},
+  {f:'Only + Dorm >= 15d',c:293,r:56.7},
+  {f:'Singles + Only',c:1254,r:54.3},
+  {f:'Singles + Only + 8d',c:401,r:54.4},
+  {f:'Singles + Only + 11d',c:259,r:56.8},
+  {f:'Singles + Only + 15d',c:197,r:57.9},
+];
+const stackBody = document.getElementById('stack-body');
+STACKED.forEach(({f,c,r}) => {
+  const lift = r/baseRate;
+  const w = Math.max(2, (lift - 0.9) / 0.35 * 100);
+  const color = lift >= 1.15 ? 'var(--green)' : lift >= 1.05 ? 'var(--blue)' : 'var(--fg-dim)';
+  const best = lift >= 1.15;
+  stackBody.innerHTML += `<tr${best?' class="best"':''}>
+    <td style="font-weight:${best?'700':'400'}">${f}</td>
+    <td>${c.toLocaleString()}</td>
+    <td style="font-weight:${best?'700':'400'};color:${best?'var(--green)':''}">${r}%</td>
+    <td class="lift" style="color:${best?'var(--green)':'var(--fg-muted)'}">${lift.toFixed(2)}x</td>
+    <td class="bar-cell"><div class="mini-bar"><div class="mini-fill" style="width:${w}%;background:${color}"></div></div></td>
+  </tr>`;
+});
+
+// ====== TOP PAIRS ======
+const maxC = TOP_PAIRS[0].carries;
+const grid = document.getElementById('pairs-grid');
+TOP_PAIRS.forEach(({pair, carries}) => {
+  const chip = document.createElement('div');
+  chip.className = 'pair-chip';
+  const pct = Math.round(carries / maxC * 100);
+  chip.innerHTML = `<div class="pair-digits">${pair}</div><div class="pair-count">${carries} carries</div><div class="pair-bar"><div class="pair-bar-fill" style="width:${pct}%"></div></div>`;
+  grid.appendChild(chip);
+});
+
+// ====== STATE BREAKDOWN ======
+let currentSort = 'alpha';
+let activeState = null;
+
+function getStates(sort) {
+  const entries = Object.entries(STATE_DATA);
+  if (sort === 'signal') return entries.sort((a,b) => b[1].mostDormantPct - a[1].mostDormantPct);
+  if (sort === 'carries') return entries.sort((a,b) => b[1].carries - a[1].carries);
+  return entries.sort((a,b) => a[0].localeCompare(b[0]));
+}
+
+function renderChips() {
+  const container = document.getElementById('state-chips');
+  container.innerHTML = '';
+  for (const [st, data] of getStates(currentSort)) {
+    const chip = document.createElement('button');
+    chip.className = 'state-chip' + (st === activeState ? ' active' : '');
+    chip.dataset.st = st;
+    chip.innerHTML = `${st.toUpperCase()} <span class="sc-pct">${data.mostDormantPct}%</span>`;
+    chip.addEventListener('click', () => showState(st));
+    container.appendChild(chip);
+  }
+}
+
+function showState(st) {
+  activeState = st === activeState ? null : st;
+  renderChips();
+  const container = document.getElementById('state-detail-container');
+  if (!activeState) { container.innerHTML = ''; return; }
+
+  const d = STATE_DATA[st];
+  const name = STATE_NAMES[st] || st.toUpperCase();
+  const maxP = d.topPairs[0]?.carries || 1;
+
+  container.innerHTML = `
+    <div class="state-detail">
+      <div class="sd-header">
+        <div class="sd-title">${name}</div>
+        <div class="sd-meta">${d.transitions} transitions &middot; ${d.draws} draws</div>
+      </div>
+      <div class="sd-stats">
+        <div class="sd-stat">
+          <div class="sd-stat-num accent">${d.mostDormantPct}%</div>
+          <div class="sd-stat-label">Most dormant = winner</div>
+        </div>
+        <div class="sd-stat">
+          <div class="sd-stat-num">${d.top3DormantPct}%</div>
+          <div class="sd-stat-label">Top-3 dormant = winner</div>
+        </div>
+        <div class="sd-stat">
+          <div class="sd-stat-num">${d.avgCarries}</div>
+          <div class="sd-stat-label">Avg carries/day</div>
+        </div>
+        <div class="sd-stat">
+          <div class="sd-stat-num">${d.carries}</div>
+          <div class="sd-stat-label">Total carries</div>
+        </div>
+      </div>
+      <div class="sd-pairs-title">Top 10 Most Carried Pairs</div>
+      <div class="sd-pairs-grid">
+        ${d.topPairs.map(p => `
+          <div class="sd-pair">
+            <div class="sd-pair-digits">${p.pair}</div>
+            <div class="sd-pair-count">${p.carries} carries</div>
+            <div class="sd-pair-bar"><div class="sd-pair-bar-fill" style="width:${Math.round(p.carries/maxP*100)}%"></div></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSort = btn.dataset.sort;
+    renderChips();
+  });
+});
+
+renderChips();
+</script>
+</html>

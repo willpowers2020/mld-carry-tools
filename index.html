@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Carry Explorer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #f6f5f0;
+  --fg: #1c1c18;
+  --fg-muted: #7a766c;
+  --surface: #fff;
+  --border: #e2dfd6;
+  --accent: #1a6b3c;
+  --accent-light: #e2f3e8;
+  --carry: #d4a017;
+  --carry-bg: #fef9e7;
+  --miss: #c0392b;
+  --miss-bg: #fdeaea;
+  --pair-a: #2d7a4f;
+  --pair-a-bg: #d4edda;
+  --winner-bg: #fef3cd;
+  --winner-border: #f0c040;
+  --header-bg: #0f1f12;
+  --header-fg: #c8e6cf;
+  --dorm-fresh: #2d7a4f;
+  --dorm-fresh-bg: #d4edda;
+  --dorm-warm: #b8860b;
+  --dorm-warm-bg: #fef3cd;
+  --dorm-cold: #8b4513;
+  --dorm-cold-bg: #fde8d0;
+  --dorm-ice: #7b2d3b;
+  --dorm-ice-bg: #f5d5dc;
+  --r5: #1a6b3c;
+  --r5-bg: #d4edda;
+  --r10: #2e86ab;
+  --r10-bg: #d4e6f1;
+  --r15: #b8860b;
+  --r15-bg: #fef3cd;
+  --r30: #8b4513;
+  --r30-bg: #fde8d0;
+  --r60: #7b2d3b;
+  --r60-bg: #f5d5dc;
+  --rnone: #999;
+  --rnone-bg: #eee;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e0f0c; --fg: #dddbd4; --fg-muted: #7d796f;
+    --surface: #1a1b17; --border: #2c2b25;
+    --accent: #5cb87a; --accent-light: #162a1c;
+    --carry: #f0c040; --carry-bg: #2a2200;
+    --miss: #ef5350; --miss-bg: #2a1010;
+    --pair-a: #66bb6a; --pair-a-bg: #1a2e1a;
+    --winner-bg: #332b00; --winner-border: #a68b00;
+    --header-bg: #080e09; --header-fg: #8abf96;
+    --dorm-fresh: #66bb6a; --dorm-fresh-bg: #1a2e1a;
+    --dorm-warm: #ffd54f; --dorm-warm-bg: #332b00;
+    --dorm-cold: #e0a060; --dorm-cold-bg: #2a1a08;
+    --dorm-ice: #ef9a9a; --dorm-ice-bg: #2a1010;
+    --r5: #66bb6a; --r5-bg: #1a2e1a;
+    --r10: #42a5f5; --r10-bg: #0d2640;
+    --r15: #ffd54f; --r15-bg: #332b00;
+    --r30: #e0a060; --r30-bg: #2a1a08;
+    --r60: #ef9a9a; --r60-bg: #2a1010;
+    --rnone: #666; --rnone-bg: #1a1a1a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e0f0c; --fg: #dddbd4; --fg-muted: #7d796f;
+  --surface: #1a1b17; --border: #2c2b25;
+  --accent: #5cb87a; --accent-light: #162a1c;
+  --carry: #f0c040; --carry-bg: #2a2200;
+  --miss: #ef5350; --miss-bg: #2a1010;
+  --pair-a: #66bb6a; --pair-a-bg: #1a2e1a;
+  --winner-bg: #332b00; --winner-border: #a68b00;
+  --header-bg: #080e09; --header-fg: #8abf96;
+  --dorm-fresh: #66bb6a; --dorm-fresh-bg: #1a2e1a;
+  --dorm-warm: #ffd54f; --dorm-warm-bg: #332b00;
+  --dorm-cold: #e0a060; --dorm-cold-bg: #2a1a08;
+  --dorm-ice: #ef9a9a; --dorm-ice-bg: #2a1010;
+  --r5: #66bb6a; --r5-bg: #1a2e1a;
+  --r10: #42a5f5; --r10-bg: #0d2640;
+  --r15: #ffd54f; --r15-bg: #332b00;
+  --r30: #e0a060; --r30-bg: #2a1a08;
+  --r60: #ef9a9a; --r60-bg: #2a1010;
+  --rnone: #666; --rnone-bg: #1a1a1a;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+  max-width: 900px; margin: 0 auto; line-height: 1.55;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+.header {
+  background: var(--header-bg); color: var(--header-fg);
+  padding: 24px; border-radius: 0 0 12px 12px;
+  margin-bottom: 20px; text-align: center;
+}
+.header h1 { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
+.header p { font-size: 0.82rem; opacity: 0.75; margin: 0; }
+
+.cal-intro { text-align: center; margin-bottom: 24px; font-size: 0.88rem; color: var(--fg-muted); }
+.cal-intro strong { color: var(--fg); }
+
+.stat-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 24px; }
+.stat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 18px; text-align: center; min-width: 100px; }
+.stat-tile .n { font-family: 'JetBrains Mono', monospace; font-size: 1.35rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.stat-tile .l { font-size: 0.68rem; color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 1px; }
+
+.day-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 32px; }
+.day-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; display: flex; flex-direction: column; gap: 10px; }
+.day-card:hover { border-color: var(--accent); box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.day-card-head { display: flex; align-items: baseline; gap: 8px; }
+.day-card-dates { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 0.95rem; }
+.day-card-arrow { color: var(--accent); font-weight: 700; }
+.day-card-rate { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.rate-high { color: var(--accent); } .rate-mid { color: var(--carry); } .rate-low { color: var(--miss); }
+.day-card-bar { height: 6px; border-radius: 3px; background: var(--miss-bg); overflow: hidden; }
+.day-card-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.3s; }
+.day-card-detail { font-size: 0.78rem; color: var(--fg-muted); display: flex; justify-content: space-between; align-items: center; }
+.day-card-miss { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--miss); }
+.tap-hint { font-size: 0.7rem; color: var(--accent); font-weight: 500; }
+
+/* Detail view */
+.detail-back { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: var(--accent); cursor: pointer; margin-bottom: 16px; padding: 6px 0; border: none; background: none; }
+.detail-back:hover { text-decoration: underline; }
+.detail-header { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+.detail-title { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 700; margin: 0 0 8px; text-wrap: balance; }
+.detail-stats { display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.82rem; }
+.detail-stats span { font-weight: 600; }
+.detail-stats .g { color: var(--accent); } .detail-stats .r { color: var(--miss); }
+
+.detail-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; }
+.legend-chip { display: inline-flex; align-items: center; gap: 4px; }
+.legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.dot-carry { background: var(--pair-a-bg); border: 1px solid var(--pair-a); }
+.dot-winner { background: var(--winner-bg); border: 1px solid var(--winner-border); }
+.dot-fresh { background: var(--dorm-fresh-bg); border: 1px solid var(--dorm-fresh); }
+.dot-warm { background: var(--dorm-warm-bg); border: 1px solid var(--dorm-warm); }
+.dot-cold { background: var(--dorm-cold-bg); border: 1px solid var(--dorm-cold); }
+.dot-ice { background: var(--dorm-ice-bg); border: 1px solid var(--dorm-ice); }
+
+.state-row { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+.state-row-head { display: flex; align-items: center; gap: 8px; padding: 10px 14px; cursor: pointer; font-weight: 600; font-size: 0.88rem; }
+.state-row-head:hover { background: var(--accent-light); }
+.st-name { font-family: 'JetBrains Mono', monospace; min-width: 28px; }
+.st-nums { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--fg-muted); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+.badge-carry { background: var(--pair-a-bg); color: var(--pair-a); }
+.badge-miss { background: var(--miss-bg); color: var(--miss); }
+.st-chevron { color: var(--fg-muted); font-size: 0.8rem; transition: transform 0.15s; }
+.st-chevron.open { transform: rotate(90deg); }
+.st-detail { padding: 0 14px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 1.8; display: none; }
+.st-detail.open { display: block; }
+
+.draw-line { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.dl-date { color: var(--fg-muted); min-width: 52px; }
+.dl-num { font-weight: 600; letter-spacing: 0.08em; }
+.dl-winner { background: var(--winner-bg); border: 1px solid var(--winner-border); padding: 0 6px; border-radius: 4px; }
+.dl-pairs { display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline; font-size: 0.72rem; }
+.dl-tod { color: var(--fg-muted); margin-right: 2px; }
+
+.pair-chip { display: inline-flex; align-items: center; gap: 2px; padding: 1px 5px; border-radius: 4px; font-weight: 500; line-height: 1.4; white-space: nowrap; cursor: pointer; transition: outline 0.1s; }
+.pair-chip:hover { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pair-chip .pair-name { font-weight: 600; }
+.pair-chip .dorm-tag { font-size: 0.62rem; font-weight: 700; opacity: 0.85; font-variant-numeric: tabular-nums; }
+.dorm-fresh { background: var(--dorm-fresh-bg); color: var(--dorm-fresh); }
+.dorm-warm { background: var(--dorm-warm-bg); color: var(--dorm-warm); }
+.dorm-cold { background: var(--dorm-cold-bg); color: var(--dorm-cold); }
+.dorm-ice { background: var(--dorm-ice-bg); color: var(--dorm-ice); }
+.pair-carried { background: var(--pair-a-bg); color: var(--pair-a); outline: 2px solid var(--pair-a); outline-offset: -1px; }
+
+.walk-box { margin-top: 8px; padding: 10px 12px; background: var(--accent-light); border-radius: 6px; font-size: 0.76rem; line-height: 1.7; }
+.walk-box strong { color: var(--accent); }
+.no-carry-box { padding: 8px 12px; background: var(--miss-bg); border-radius: 6px; color: var(--miss); font-size: 0.76rem; font-weight: 600; }
+
+/* ── 4DP EXPLORER VIEW ── */
+.exp-header { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+.exp-title { font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 700; margin: 0 0 6px; }
+.exp-sub { font-size: 0.82rem; color: var(--fg-muted); margin: 0; }
+.exp-sub strong { color: var(--fg); }
+
+.exp-legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; }
+.exp-legend .legend-chip { padding: 2px 6px; border-radius: 4px; }
+.leg-5d { background: var(--r5-bg); color: var(--r5); }
+.leg-10d { background: var(--r10-bg); color: var(--r10); }
+.leg-15d { background: var(--r15-bg); color: var(--r15); }
+.leg-30d { background: var(--r30-bg); color: var(--r30); }
+.leg-60d { background: var(--r60-bg); color: var(--r60); }
+.leg-none { background: var(--rnone-bg); color: var(--rnone); }
+
+.exp-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.exp-stat { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; text-align: center; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; position: relative; }
+.exp-stat:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.exp-stat.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.exp-stat-fire { position: absolute; top: -8px; right: -4px; font-size: 1rem; filter: drop-shadow(0 1px 2px rgba(255,107,0,0.5)); animation: fire-bounce 1s ease-in-out infinite alternate; }
+@keyframes fire-bounce { from { transform: scale(1); } to { transform: scale(1.15); } }
+.exp-stat.has-winner { border-color: #ff6b00; background: linear-gradient(135deg, #ff6b0008, #ff950005); }
+.exp-stat.has-winner .n { color: #ff6b00 !important; }
+.exp-stat .n { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.exp-stat .l { font-size: 0.62rem; color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+.pat-section { margin-bottom: 20px; }
+.pat-head { font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; font-weight: 700; margin-bottom: 8px; display: flex; align-items: baseline; gap: 8px; }
+.pat-count { font-size: 0.72rem; color: var(--fg-muted); font-weight: 500; }
+.pat-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.fdp {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; font-weight: 500;
+  padding: 3px 6px; border-radius: 4px;
+  display: inline-flex; align-items: center; gap: 3px;
+  line-height: 1.3; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.fdp .fdp-st { font-size: 0.58rem; font-weight: 700; opacity: 0.7; }
+.fdp-winner { background: linear-gradient(135deg, #ff6b00, #ff9500) !important; color: #fff !important; font-weight: 700 !important; animation: winner-glow 1.5s ease-in-out infinite alternate; box-shadow: 0 0 8px rgba(255,107,0,0.4); }
+.fdp-winner .fdp-st { color: #fff !important; opacity: 0.9; }
+@keyframes winner-glow { from { box-shadow: 0 0 6px rgba(255,107,0,0.3); } to { box-shadow: 0 0 14px rgba(255,107,0,0.6); } }
+.winner-callout { background: linear-gradient(135deg, #ff6b0018, #ff950010); border: 1px solid #ff6b0050; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+.winner-callout-title { font-family: 'JetBrains Mono', monospace; font-size: 0.92rem; font-weight: 700; margin: 0 0 6px; }
+.winner-callout-nums { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; color: #ff6b00; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.winner-callout-nums .wc-num { background: linear-gradient(135deg, #ff6b00, #ff9500); color: #fff; padding: 4px 10px; border-radius: 6px; }
+.winner-callout-nums .wc-st { font-size: 0.68rem; color: var(--fg-muted); font-weight: 500; }
+.fdp-5d { background: var(--r5-bg); color: var(--r5); }
+.fdp-10d { background: var(--r10-bg); color: var(--r10); }
+.fdp-15d { background: var(--r15-bg); color: var(--r15); }
+.fdp-30d { background: var(--r30-bg); color: var(--r30); }
+.fdp-60d { background: var(--r60-bg); color: var(--r60); }
+.fdp-none { background: var(--rnone-bg); color: var(--rnone); }
+
+.pl-banner { background: var(--accent-light); border: 2px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; text-align: center; }
+.pl-banner-title { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 700; color: var(--accent); margin: 0 0 4px; }
+.pl-banner-sub { font-size: 0.82rem; color: var(--fg-muted); margin: 0; }
+.pl-banner-sub strong { color: var(--fg); }
+.pl-banner.has-winner { border-color: #ff6b00; background: linear-gradient(135deg, #ff6b0012, #ff950008); }
+.pl-banner.has-winner .pl-banner-title { color: #ff6b00; }
+.pl-copy { display: inline-flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 600; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--fg-muted); cursor: pointer; margin-top: 8px; transition: all 0.15s; }
+.pl-copy:hover { border-color: var(--accent); color: var(--accent); }
+.pl-copy.copied { background: var(--accent); color: #fff; border-color: var(--accent); }
+.pl-winners-pinned { margin-bottom: 8px; }
+.pl-winners-pinned .pw-label { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 600; color: #ff6b00; margin-bottom: 6px; }
+.pl-winners-pinned .pw-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.pl-divider { width: 100%; border: none; border-top: 1px dashed var(--border); margin: 8px 0; }
+.pl-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 12px; }
+.pl-grid .fdp { font-size: 0.82rem; padding: 5px 10px; }
+.pl-grid .fdp .fdp-st { font-size: 0.64rem; }
+.recency-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+.rf-btn {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 600;
+  padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--fg-muted); cursor: pointer;
+}
+.rf-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.rf-btn:hover { border-color: var(--accent); }
+
+/* Mode toggle (2DP/3DP) */
+.mode-toggle { display: inline-flex; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 16px; }
+.mode-btn { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; font-weight: 600; padding: 8px 18px; background: var(--surface); color: var(--fg-muted); border: none; cursor: pointer; transition: all 0.15s; }
+.mode-btn:not(:last-child) { border-right: 1px solid var(--border); }
+.mode-btn.active { background: var(--accent); color: #fff; }
+.mode-btn:hover:not(.active) { background: var(--accent-light); color: var(--accent); }
+
+/* 3DP chip */
+.trip-chip { display: inline-flex; align-items: center; gap: 2px; padding: 1px 5px; border-radius: 4px; font-weight: 500; line-height: 1.4; white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; }
+.trip-chip .trip-name { font-weight: 600; letter-spacing: 0.04em; }
+.trip-chip .trip-tag { font-size: 0.6rem; font-weight: 700; opacity: 0.85; }
+.trip-carried { background: #2563eb18; color: #2563eb; outline: 2px solid #2563eb; outline-offset: -1px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .trip-carried { background: #3b82f618; color: #60a5fa; outline-color: #60a5fa; } }
+:root[data-theme="dark"] .trip-carried { background: #3b82f618; color: #60a5fa; outline-color: #60a5fa; }
+.trip-default { background: var(--rnone-bg); color: var(--rnone); }
+.badge-3dp { background: #2563eb18; color: #2563eb; border: 1px solid #2563eb40; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .badge-3dp { background: #3b82f618; color: #60a5fa; border-color: #60a5fa40; } }
+:root[data-theme="dark"] .badge-3dp { background: #3b82f618; color: #60a5fa; border-color: #60a5fa40; }
+.walk-box-3dp { margin-top: 8px; padding: 10px 12px; background: #2563eb08; border: 1px solid #2563eb30; border-radius: 6px; font-size: 0.76rem; line-height: 1.7; }
+.walk-box-3dp strong { color: #2563eb; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .walk-box-3dp { background: #2563eb10; border-color: #3b82f630; } :root:not([data-theme="light"]) .walk-box-3dp strong { color: #60a5fa; } }
+:root[data-theme="dark"] .walk-box-3dp { background: #2563eb10; border-color: #3b82f630; }
+:root[data-theme="dark"] .walk-box-3dp strong { color: #60a5fa; }
+
+/* Signal badges */
+.signal-badge { display: inline-flex; align-items: center; gap: 3px; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; white-space: nowrap; background: linear-gradient(135deg, #7c3aed20, #a78bfa20); color: #7c3aed; border: 1px solid #7c3aed40; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .signal-badge { background: linear-gradient(135deg, #7c3aed30, #a78bfa15); color: #a78bfa; border-color: #a78bfa40; } }
+:root[data-theme="dark"] .signal-badge { background: linear-gradient(135deg, #7c3aed30, #a78bfa15); color: #a78bfa; border-color: #a78bfa40; }
+.signal-badge::before { content: '⚡'; }
+.st-badge.badge-signal { background: linear-gradient(135deg, #7c3aed20, #a78bfa20); color: #7c3aed; border: 1px solid #7c3aed40; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .st-badge.badge-signal { background: linear-gradient(135deg, #7c3aed30, #a78bfa15); color: #a78bfa; border-color: #a78bfa40; } }
+:root[data-theme="dark"] .st-badge.badge-signal { background: linear-gradient(135deg, #7c3aed30, #a78bfa15); color: #a78bfa; border-color: #a78bfa40; }
+.signal-callout { background: linear-gradient(135deg, #7c3aed08, #a78bfa05); border: 1px solid #7c3aed30; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 0.82rem; }
+.signal-callout strong { color: #7c3aed; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .signal-callout { border-color: #a78bfa30; } :root:not([data-theme="light"]) .signal-callout strong { color: #a78bfa; } }
+:root[data-theme="dark"] .signal-callout { border-color: #a78bfa30; }
+:root[data-theme="dark"] .signal-callout strong { color: #a78bfa; }
+.day-card.has-signal { border-color: #7c3aed60; }
+.day-card.has-signal:hover { border-color: #7c3aed; box-shadow: 0 2px 12px rgba(124,58,237,0.15); }
+.state-row.has-signal { border-color: #7c3aed40; }
+.signal-detail { background: linear-gradient(135deg, #7c3aed10, #a78bfa05); border-radius: 6px; padding: 8px 12px; margin-top: 8px; font-size: 0.76rem; line-height: 1.7; }
+.signal-detail strong { color: #7c3aed; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .signal-detail strong { color: #a78bfa; } }
+:root[data-theme="dark"] .signal-detail strong { color: #a78bfa; }
+
+[hidden] { display: none !important; }
+</style>
+
+<div class="header">
+  <h1>Carry Explorer</h1>
+  <p>Oct 1 – Nov 14, 2026 &nbsp;·&nbsp; All States Pick 4 &nbsp;·&nbsp; 2DP + 3DP Carryover Analysis</p>
+</div>
+
+<div id="view-cal">
+  <p class="cal-intro">Every day, the winning Pick 4 number shares at least one 2-digit pair with yesterday's draws — <strong>across 70–90% of states</strong>. Click a date to see exactly how.</p>
+  <div class="signal-callout">
+    <strong>⚡ Signal events highlighted:</strong> When a Singles source draw produces <em>exactly one</em> carried pair with 11+ days dormancy, that pair wins <strong>57.9%</strong> of the time (1.23x lift). Look for the purple ⚡ badges below.
+  </div>
+  <div class="stat-row" id="summary-stats"></div>
+  <div class="day-grid" id="day-grid"></div>
+</div>
+
+<div id="view-detail" hidden>
+  <button class="detail-back" id="back-btn">← All dates</button>
+  <div id="detail-content"></div>
+</div>
+
+<div id="view-explore" hidden>
+  <button class="detail-back" id="back-btn-exp">← Back to date</button>
+  <div id="explore-content"></div>
+</div>
+
+<script>
+let DATA = [], DRAWS = {}, CUR_IDX = -1, CUR_MODE = '2dp';
+
+function fmtDate(s) {
+  const [,m,d] = s.split('-');
+  const months = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[+m]} ${+d}`;
+}
+function fmtShort(s) { const [,m,d] = s.split('-'); return `${+m}/${+d}`; }
+function rateClass(r) { return r >= 80 ? 'rate-high' : r >= 70 ? 'rate-mid' : 'rate-low'; }
+function dormClass(d) {
+  if (d === null || d === undefined) return 'dorm-ice';
+  if (d <= 3) return 'dorm-fresh'; if (d <= 10) return 'dorm-warm';
+  if (d <= 30) return 'dorm-cold'; return 'dorm-ice';
+}
+
+function renderPairChip(pObj, isCarried, clickable) {
+  const dc = isCarried ? 'pair-carried' : dormClass(pObj.d);
+  const dormLabel = pObj.d != null ? `<span class="dorm-tag">${pObj.d}d</span>` : '';
+  const attr = clickable ? `data-pair="${pObj.p}"` : '';
+  return `<span class="pair-chip ${dc}" ${attr}><span class="pair-name">${pObj.p}</span>${dormLabel}</span>`;
+}
+
+// Generate all 4-digit numbers containing a specific 2DP
+function gen4DPs(pair) {
+  const a = pair[0], b = pair[1];
+  const results = [];
+  for (let i = 0; i < 10000; i++) {
+    const s = String(i).padStart(4, '0');
+    const digits = s.split('');
+    // Check if this number contains both digits a and b as a pair
+    let found = false;
+    for (let x = 0; x < 4 && !found; x++)
+      for (let y = x+1; y < 4 && !found; y++) {
+        const p = [digits[x], digits[y]].sort().join('');
+        if (p === pair) found = true;
+      }
+    if (found) results.push(s);
+  }
+  return results;
+}
+
+// Classify digit pattern
+function digitPattern(num) {
+  const freq = {};
+  for (const c of num) freq[c] = (freq[c]||0) + 1;
+  const vals = Object.values(freq).sort((a,b) => b-a);
+  if (vals[0] === 4) return 'Quads';
+  if (vals[0] === 3) return 'Triples';
+  if (vals[0] === 2 && vals[1] === 2) return 'Double-Doubles';
+  if (vals[0] === 2) return 'Doubles';
+  return 'Singles';
+}
+
+// Normalize a 4-digit number (sort digits ascending)
+function norm(num) { return num.split('').sort().join(''); }
+
+// Find most recent cross-state appearance of ANY permutation before refDate
+function findRecent(num, refDateStr) {
+  const target = norm(num);
+  const dates = Object.keys(DRAWS).filter(d => d < refDateStr).sort().reverse();
+  for (const d of dates) {
+    const dayData = DRAWS[d];
+    for (const st of Object.keys(dayData)) {
+      for (const drawn of dayData[st]) {
+        if (norm(drawn) === target) {
+          const diff = Math.round((new Date(refDateStr) - new Date(d)) / 86400000);
+          return { state: st, date: d, daysAgo: diff, perm: drawn };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function recencyBucket(daysAgo) {
+  if (daysAgo === null) return 'none';
+  if (daysAgo <= 5) return '5d';
+  if (daysAgo <= 10) return '10d';
+  if (daysAgo <= 15) return '15d';
+  if (daysAgo <= 30) return '30d';
+  if (daysAgo <= 60) return '60d';
+  return 'none';
+}
+
+// ── CALENDAR VIEW ──
+function renderCal() {
+  const avg = DATA.length ? Math.round(DATA.reduce((s,t)=>s+t.rate,0)/DATA.length*10)/10 : 0;
+  const avg3 = DATA.length ? Math.round(DATA.reduce((s,t)=>s+(t.rate_3dp||0),0)/DATA.length*10)/10 : 0;
+  const totalCarry = DATA.reduce((s,t)=>s+t.carry_states,0);
+  const totalCarry3 = DATA.reduce((s,t)=>s+(t.carry_states_3dp||0),0);
+  const totalAll = DATA.reduce((s,t)=>s+t.total_states,0);
+  const totalSig = DATA.reduce((s,t)=>s+(t.signal_count||0),0);
+  document.getElementById('summary-stats').innerHTML = `
+    <div class="stat-tile"><div class="n">${DATA.length}</div><div class="l">Transitions</div></div>
+    <div class="stat-tile"><div class="n">${avg}%</div><div class="l">2DP Carry Rate</div></div>
+    <div class="stat-tile" style="border-color:#2563eb40"><div class="n" style="color:#2563eb">${avg3}%</div><div class="l">3DP Carry (3d)</div></div>
+    <div class="stat-tile"><div class="n">${totalCarry}/${totalAll}</div><div class="l">2DP State-Days</div></div>
+    <div class="stat-tile" style="border-color:#7c3aed40"><div class="n" style="color:#7c3aed">⚡ ${totalSig}</div><div class="l">Signal Events</div></div>`;
+
+  document.getElementById('day-grid').innerHTML = DATA.map((t, i) => {
+    const miss = t.states.filter(s => !s.has_carry).map(s => s.state);
+    const sigCount = t.signal_count || 0;
+    const sigBadge = sigCount > 0 ? `<span class="signal-badge">${sigCount} signal${sigCount>1?'s':''}</span>` : '';
+    return `<div class="day-card${sigCount?' has-signal':''}" data-idx="${i}">
+      <div class="day-card-head">
+        <span class="day-card-dates">${fmtDate(t.from_date)} <span class="day-card-arrow">→</span> ${fmtDate(t.to_date)}</span>
+        ${sigBadge}
+        <span class="day-card-rate ${rateClass(t.rate)}">${t.rate}%</span>
+      </div>
+      <div class="day-card-bar"><div class="day-card-bar-fill" style="width:${t.rate}%"></div></div>
+      <div class="day-card-detail">
+        <span>2DP: ${t.carry_states}/${t.total_states} &nbsp;·&nbsp; 3DP: ${t.carry_states_3dp||0}/${t.total_states}</span>
+        <span class="tap-hint">Click for proof →</span>
+      </div>
+      <div class="day-card-miss">No carry: ${miss.length ? miss.join(', ') : 'none'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── DETAIL VIEW ──
+function renderDetailHeader(t) {
+  const win3dp = t.window_3dp || 3;
+  return `<div class="detail-header">
+    <div class="detail-title">${fmtDate(t.from_date)} → ${fmtDate(t.to_date)}: Carry Proof</div>
+    <div class="detail-stats">
+      <span class="g">2DP: ${t.carry_states}/${t.total_states} (${t.rate}%)</span>
+      <span style="color:#2563eb;font-weight:600">3DP: ${t.carry_states_3dp||0}/${t.total_states} (${t.rate_3dp||0}%)</span>
+      <span class="r">${t.no_carry_states} no 2DP carry</span>
+    </div>
+  </div>
+  <div class="mode-toggle" id="mode-toggle">
+    <button class="mode-btn${CUR_MODE==='2dp'?' active':''}" data-mode="2dp">2DP (same day)</button>
+    <button class="mode-btn${CUR_MODE==='3dp'?' active':''}" data-mode="3dp">3DP (${win3dp}-day window)</button>
+  </div>`;
+}
+
+function renderTripChip(t, isCarried) {
+  const cls = isCarried ? 'trip-carried' : 'trip-default';
+  const srcTag = t.src && t.src.length ? `<span class="trip-tag">${t.src.length > 1 ? t.src.length+'x' : fmtShort(t.src[0].date)}</span>` : '';
+  const dormTag = t.d != null ? `<span class="trip-tag">${t.d}d</span>` : '';
+  return `<span class="trip-chip ${cls}"><span class="trip-name">${t.p}</span>${dormTag}${srcTag}</span>`;
+}
+
+function renderDetail2DP(t) {
+  const carryStates = t.states.filter(s => s.has_carry);
+  const missStates = t.states.filter(s => !s.has_carry);
+
+  let html = `<div class="detail-legend">
+    <span class="legend-chip"><span class="legend-dot dot-carry"></span> Carried</span>
+    <span class="legend-chip"><span class="legend-dot dot-winner"></span> Winner</span>
+    <span class="legend-chip"><span class="legend-dot dot-fresh"></span> 1-3d</span>
+    <span class="legend-chip"><span class="legend-dot dot-warm"></span> 4-10d</span>
+    <span class="legend-chip"><span class="legend-dot dot-cold"></span> 11-30d</span>
+    <span class="legend-chip"><span class="legend-dot dot-ice"></span> 30d+</span>
+    <span class="legend-chip"><span class="signal-badge" style="font-size:0.62rem">Signal</span></span>
+    <span style="color:var(--accent);font-size:0.68rem;margin-left:4px">Click any pair →</span>
+  </div>`;
+
+  const sigCount = t.signal_count || 0;
+  if (sigCount > 0) {
+    const sigStates = t.states.filter(s => s.signal);
+    html += `<div class="signal-callout" style="margin-top:12px">
+      <strong>⚡ ${sigCount} signal event${sigCount>1?'s':''} this day:</strong>
+      ${sigStates.map(s => `${s.state} (pair ${s.signal_pair}, ${s.signal_dorm}d dormant)`).join(' · ')}
+      <br><span style="font-size:0.76rem;opacity:0.8">Singles source + only 1 carrier + 11d+ dormancy → 57.9% win rate</span>
+    </div>`;
+  }
+
+  for (const s of carryStates) {
+    const d1Nums = s.d1_draws.map(d => d.num).join(', ');
+    const d2Nums = s.d2_draws.map(d => d.num).join(', ');
+    const carriedSet = new Set(s.d2_draws.flatMap(d => d.carried_from_d1));
+    const isSig = s.signal;
+    html += `<div class="state-row${isSig?' has-signal':''}">
+      <div class="state-row-head" data-state="${s.state}">
+        <span class="st-name">${s.state}</span>
+        <span class="st-nums">${fmtShort(t.from_date)}: ${d1Nums} → ${fmtShort(t.to_date)}: ${d2Nums}</span>
+        ${isSig ? '<span class="st-badge badge-signal">⚡ Signal</span>' : ''}
+        <span class="st-badge badge-carry">${carriedSet.size} pair${carriedSet.size>1?'s':''}</span>
+        <span class="st-chevron">▸</span>
+      </div>
+      <div class="st-detail" data-detail="${s.state}">`;
+    for (const d of s.d1_draws) {
+      html += `<div class="draw-line"><span class="dl-date">${fmtShort(t.from_date)}</span>
+        <span class="dl-num">${d.num.split('').join(' ')}</span>
+        <span class="dl-pairs"><span class="dl-tod">${d.tod}:</span> ${d.pairs.map(p => renderPairChip(p, carriedSet.has(p.p), true)).join(' ')}</span></div>`;
+    }
+    for (const d of s.d2_draws) {
+      html += `<div class="draw-line"><span class="dl-date">${fmtShort(t.to_date)}</span>
+        <span class="dl-num dl-winner">${d.num.split('').join(' ')}</span>
+        <span class="dl-pairs"><span class="dl-tod">${d.tod}:</span> ${d.pairs.map(p => renderPairChip(p, p.c===1, true)).join(' ')}</span></div>`;
+    }
+    const allCarried = [...carriedSet].sort();
+    if (allCarried.length) {
+      html += `<div class="walk-box"><strong>How the winner was reachable:</strong> Yesterday's draws (${d1Nums}) contained the 2DP${allCarried.length>1?'s':''} <strong>${allCarried.join(', ')}</strong>.
+        Today's winner${s.d2_draws.length>1?'s':''} (${d2Nums}) also contain${s.d2_draws.length===1?'s':''} ${allCarried.length>1?'these pairs':'this pair'}.
+        If you played all 4-digit combinations containing ${allCarried.length>1?'any of those pairs':'that pair'}, the winner was in your list.</div>`;
+    }
+    if (isSig) {
+      const srcPattern = s.has_singles ? 'Singles' : s.d1_draws.map(d => d.pattern || '').join('/');
+      html += `<div class="signal-detail">
+        <strong>⚡ High-Signal Event</strong><br>
+        <strong>Pair:</strong> ${s.signal_pair} &nbsp;·&nbsp;
+        <strong>Dormancy:</strong> ${s.signal_dorm} days &nbsp;·&nbsp;
+        <strong>Source:</strong> ${srcPattern} &nbsp;·&nbsp;
+        <strong>Only carrier:</strong> Yes<br>
+        <span style="opacity:0.8">This combination (singles source + only 1 carried pair + ${s.signal_dorm}d dormancy) hits the winner <strong>57.9%</strong> of the time.</span>
+      </div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  if (missStates.length) {
+    html += `<div style="margin-top:16px;margin-bottom:8px;font-size:0.82rem;font-weight:600;color:var(--fg-muted)">No carry (${missStates.length} state${missStates.length>1?'s':''}):</div>`;
+    for (const s of missStates) {
+      const d1Nums = s.d1_draws.map(d => d.num).join(', ');
+      const d2Nums = s.d2_draws.map(d => d.num).join(', ');
+      html += `<div class="state-row"><div class="state-row-head" data-state="${s.state}">
+          <span class="st-name">${s.state}</span>
+          <span class="st-nums">${fmtShort(t.from_date)}: ${d1Nums} → ${fmtShort(t.to_date)}: ${d2Nums}</span>
+          <span class="st-badge badge-miss">0 pairs</span><span class="st-chevron">▸</span>
+        </div><div class="st-detail" data-detail="${s.state}">`;
+      for (const d of s.d1_draws) {
+        html += `<div class="draw-line"><span class="dl-date">${fmtShort(t.from_date)}</span>
+          <span class="dl-num">${d.num.split('').join(' ')}</span>
+          <span class="dl-pairs"><span class="dl-tod">${d.tod}:</span> ${d.pairs.map(p => renderPairChip(p, false, true)).join(' ')}</span></div>`;
+      }
+      for (const d of s.d2_draws) {
+        html += `<div class="draw-line"><span class="dl-date">${fmtShort(t.to_date)}</span>
+          <span class="dl-num">${d.num.split('').join(' ')}</span>
+          <span class="dl-pairs"><span class="dl-tod">${d.tod}:</span> ${d.pairs.map(p => renderPairChip(p, false, true)).join(' ')}</span></div>`;
+      }
+      html += `<div class="no-carry-box">No 2DP from ${fmtDate(t.from_date)} appeared in ${fmtDate(t.to_date)}'s winner.</div></div></div>`;
+    }
+  }
+  return html;
+}
+
+function renderDetail3DP(t) {
+  const win = t.window_3dp || 3;
+  const carry3States = t.states.filter(s => s.has_carry_3dp);
+  const miss3States = t.states.filter(s => !s.has_carry_3dp);
+
+  let html = `<div class="detail-legend" style="margin-bottom:12px">
+    <span class="legend-chip"><span class="trip-chip trip-carried" style="font-size:0.62rem;padding:1px 4px"><span class="trip-name">3DP</span></span> Carried</span>
+    <span class="legend-chip"><span class="legend-dot dot-winner"></span> Winner</span>
+    <span style="font-size:0.72rem;color:var(--fg-muted)">Window: past ${win} days → today</span>
+  </div>
+  <p style="font-size:0.82rem;color:var(--fg-muted);margin:0 0 16px">
+    A <strong style="color:#2563eb">3DP carry</strong> means 3 of the 4 digits in a previous draw (within ${win} days) appear together in today's winner.
+    This is a stronger structural match than 2DP — fewer combos to play.
+  </p>`;
+
+  for (const s of carry3States) {
+    const d2Nums = s.d2_draws.map(d => d.num).join(', ');
+    const d1Nums = s.d1_draws.map(d => d.num).join(', ');
+    const carried3 = s.carried_3dp || [];
+    const carried3Set = new Set(carried3.map(c => c.p));
+
+    html += `<div class="state-row">
+      <div class="state-row-head" data-state="3dp-${s.state}">
+        <span class="st-name">${s.state}</span>
+        <span class="st-nums">${fmtShort(t.to_date)}: ${d2Nums}</span>
+        <span class="st-badge badge-3dp">${carried3.length} 3DP${carried3.length>1?'s':''}</span>
+        <span class="st-chevron">▸</span>
+      </div>
+      <div class="st-detail" data-detail="3dp-${s.state}">`;
+
+    // Show source draws with 3DP chips
+    for (const d of s.d1_draws) {
+      const trips = d.trips || [];
+      html += `<div class="draw-line"><span class="dl-date">${fmtShort(t.from_date)}</span>
+        <span class="dl-num">${d.num.split('').join(' ')}</span>
+        <span class="dl-pairs">${trips.map(t3 => renderTripChip(t3, t3.c===1)).join(' ')}</span></div>`;
+    }
+
+    // Show winner draws with 3DP chips
+    for (const d of s.d2_draws) {
+      const trips = d.trips || [];
+      html += `<div class="draw-line"><span class="dl-date">${fmtShort(t.to_date)}</span>
+        <span class="dl-num dl-winner">${d.num.split('').join(' ')}</span>
+        <span class="dl-pairs">${trips.map(t3 => renderTripChip(t3, t3.c===1)).join(' ')}</span></div>`;
+    }
+
+    // Walkthrough for each carried 3DP
+    for (const c3 of carried3) {
+      const srcs = c3.src || [];
+      const srcStr = srcs.map(s2 => `${s2.num} (${fmtShort(s2.date)} ${s2.tod})`).join(', ');
+      const dormStr = c3.d != null ? ` — dormancy: ${c3.d}d` : '';
+      html += `<div class="walk-box-3dp">
+        <strong>3DP ${c3.p} carried:</strong> Source: ${srcStr}${dormStr}<br>
+        Only ${comboCount3DP(c3.p)} unique 4-digit numbers contain ${c3.p} — much narrower than a 2DP.
+      </div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  if (miss3States.length) {
+    html += `<div style="margin-top:16px;margin-bottom:8px;font-size:0.82rem;font-weight:600;color:var(--fg-muted)">No 3DP carry (${miss3States.length} state${miss3States.length>1?'s':''}):</div>`;
+    const showMax = 5;
+    const shown = miss3States.slice(0, showMax);
+    const hidden = miss3States.length - showMax;
+    for (const s of shown) {
+      const d2Nums = s.d2_draws.map(d => d.num).join(', ');
+      html += `<div class="state-row"><div class="state-row-head">
+        <span class="st-name">${s.state}</span>
+        <span class="st-nums">${fmtShort(t.to_date)}: ${d2Nums}</span>
+        <span class="st-badge badge-miss">0 3DPs</span>
+      </div></div>`;
+    }
+    if (hidden > 0) html += `<div style="font-size:0.76rem;color:var(--fg-muted);margin-top:4px">…and ${hidden} more</div>`;
+  }
+  return html;
+}
+
+function comboCount3DP(trip) {
+  let count = 0;
+  const a = trip[0], b = trip[1], c = trip[2];
+  for (let d = 0; d <= 9; d++) {
+    const digits = [a, b, c, String(d)];
+    const perms = new Set();
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { if (j===i) continue;
+      for (let k = 0; k < 4; k++) { if (k===i||k===j) continue;
+        const l = 6 - i - j - k;
+        perms.add(digits[i]+digits[j]+digits[k]+digits[l]);
+      }
+    }
+    count += perms.size;
+  }
+  // Dedupe by norm
+  const norms = new Set();
+  for (let i = 0; i < 10000; i++) {
+    const s = String(i).padStart(4,'0');
+    const d = s.split('');
+    let found = false;
+    for (let x=0;x<4&&!found;x++) for (let y=x+1;y<4&&!found;y++) for (let z=y+1;z<4&&!found;z++) {
+      if ([d[x],d[y],d[z]].sort().join('')===trip) found = true;
+    }
+    if (found) norms.add(s.split('').sort().join(''));
+  }
+  return norms.size;
+}
+
+function renderDetail(idx) {
+  const t = DATA[idx];
+  if (!t) return;
+  let html = renderDetailHeader(t);
+  html += `<div id="detail-body">${CUR_MODE === '2dp' ? renderDetail2DP(t) : renderDetail3DP(t)}</div>`;
+  document.getElementById('detail-content').innerHTML = html;
+}
+
+// ── 4DP EXPLORER VIEW ──
+let activeFilter = 'all';
+
+function renderExplorer(pair, refDateStr) {
+  const el = document.getElementById('explore-content');
+  el.innerHTML = '<p style="text-align:center;color:var(--fg-muted);padding:40px 0">Computing all 4-digit combos for pair <strong>' + pair + '</strong>…</p>';
+
+  requestAnimationFrame(() => {
+    const allPerms = gen4DPs(pair);
+
+    // Collect winning numbers first so we can prefer them during dedup
+    const t = DATA[CUR_IDX];
+    const winnerNorms = new Set();
+    const winnerSet = new Set();
+    const winnerDetails = [];
+    if (t) {
+      for (const s of t.states) {
+        for (const d of s.d2_draws) {
+          if (allPerms.includes(d.num)) {
+            winnerNorms.add(norm(d.num));
+            winnerSet.add(d.num);
+            winnerDetails.push({ num: d.num, state: s.state, tod: d.tod });
+          }
+        }
+      }
+    }
+
+    // Dedupe by normalized form. Keep the actual winner perm when one exists.
+    const seenNorms = new Set();
+    const normToNum = {};
+    // First pass: register winners so their exact perm is preferred
+    for (const num of allPerms) {
+      const n = norm(num);
+      if (winnerSet.has(num)) { normToNum[n] = num; seenNorms.add(n); }
+    }
+    // Second pass: fill in the rest (first perm seen = the sorted/canonical one)
+    for (const num of allPerms) {
+      const n = norm(num);
+      if (!seenNorms.has(n)) { normToNum[n] = num; seenNorms.add(n); }
+    }
+    const allNums = Object.values(normToNum);
+
+    // Build normalized index for fast perm-aware recency lookup
+    const normIndex = {};
+    const datesDesc = Object.keys(DRAWS).filter(d => d < refDateStr).sort().reverse();
+    for (const d of datesDesc) {
+      const dayData = DRAWS[d];
+      for (const st of Object.keys(dayData)) {
+        for (const drawn of dayData[st]) {
+          const n = norm(drawn);
+          if (!normIndex[n]) normIndex[n] = { state: st.toUpperCase(), date: d, drawn };
+        }
+      }
+    }
+
+    // Find recency for each using the norm index (permutation match)
+    const enriched = allNums.map(num => {
+      const n = norm(num);
+      const hit = normIndex[n];
+      let rec = null;
+      if (hit) {
+        const diff = Math.round((new Date(refDateStr) - new Date(hit.date)) / 86400000);
+        rec = { state: hit.state, date: hit.date, daysAgo: diff, perm: hit.drawn };
+      }
+      return {
+        num,
+        pattern: digitPattern(num),
+        recent: rec,
+        bucket: rec ? recencyBucket(rec.daysAgo) : 'none'
+      };
+    });
+
+    // Sort by recency (most recent first within each group)
+    enriched.sort((a, b) => {
+      const order = {'5d':0,'10d':1,'15d':2,'30d':3,'60d':4,'none':5};
+      const diff = (order[a.bucket]||5) - (order[b.bucket]||5);
+      if (diff !== 0) return diff;
+      if (a.recent && b.recent) return a.recent.daysAgo - b.recent.daysAgo;
+      return 0;
+    });
+
+    // Stats
+    const bucketCounts = {};
+    for (const e of enriched) bucketCounts[e.bucket] = (bucketCounts[e.bucket]||0) + 1;
+    const patCounts = {};
+    for (const e of enriched) patCounts[e.pattern] = (patCounts[e.pattern]||0) + 1;
+
+    // Which buckets contain winners?
+    const winnerBuckets = new Set();
+    for (const e of enriched) { if (winnerSet.has(e.num)) winnerBuckets.add(e.bucket); }
+
+    let html = `<div class="exp-header">
+      <div class="exp-title">2DP ${pair} → All 4-Digit Combinations</div>
+      <p class="exp-sub"><strong>${allNums.length}</strong> unique numbers contain pair ${pair} <span style="color:var(--fg-muted);font-size:0.75rem">(${allPerms.length} perms deduped)</span> &nbsp;·&nbsp; Cross-state activity as of <strong>${fmtDate(refDateStr)}</strong></p>
+    </div>`;
+
+    if (winnerDetails.length) {
+      html += `<div class="winner-callout">
+        <div class="winner-callout-title">🔥 Winner${winnerDetails.length > 1 ? 's' : ''} in this list!</div>
+        <div class="winner-callout-nums">${winnerDetails.map(w => `<span class="wc-num">${w.num}</span><span class="wc-st">${w.state} ${w.tod}</span>`).join(' ')}</div>
+      </div>`;
+    }
+
+    html += `
+
+    <div class="exp-stats">
+      ${[['5d','≤5 days','--r5'],['10d','6-10 days','--r10'],['15d','11-15 days','--r15'],['30d','16-30 days','--r30'],['60d','31-60 days','--r60'],['none','60d+ / unseen','--rnone']].map(([b,label,cv]) => {
+        const cnt = bucketCounts[b]||0;
+        const hw = winnerBuckets.has(b);
+        return `<div class="exp-stat${hw?' has-winner':''}" data-rf="${b}"><div class="n" style="color:var(${cv})">${cnt}</div><div class="l">${label}</div>${hw?'<span class="exp-stat-fire">🔥</span>':''}</div>`;
+      }).join('')}
+    </div>
+
+    <div class="recency-filter">
+      <button class="rf-btn active" data-rf="all">All (${allNums.length})</button>
+      <button class="rf-btn" data-rf="5d">≤5d (${bucketCounts['5d']||0})</button>
+      <button class="rf-btn" data-rf="10d">≤10d (${(bucketCounts['5d']||0)+(bucketCounts['10d']||0)})</button>
+      <button class="rf-btn" data-rf="15d">≤15d (${(bucketCounts['5d']||0)+(bucketCounts['10d']||0)+(bucketCounts['15d']||0)})</button>
+      <button class="rf-btn" data-rf="30d">≤30d (${(bucketCounts['5d']||0)+(bucketCounts['10d']||0)+(bucketCounts['15d']||0)+(bucketCounts['30d']||0)})</button>
+      <button class="rf-btn" data-rf="60d">≤60d (${allNums.length - (bucketCounts['none']||0)})</button>
+    </div>
+
+    <div id="pl-banner" class="pl-banner" hidden></div>
+    <div id="pl-grid" class="pl-grid" hidden></div>`;
+
+    const patOrder = ['Singles','Doubles','Double-Doubles','Triples','Quads'];
+    const filterOrder = {'all':['5d','10d','15d','30d','60d','none'], '5d':['5d'], '10d':['5d','10d'], '15d':['5d','10d','15d'], '30d':['5d','10d','15d','30d'], '60d':['5d','10d','15d','30d','60d']};
+
+    for (const pat of patOrder) {
+      const items = enriched.filter(e => e.pattern === pat);
+      if (!items.length) continue;
+      const patNums = items.map(e => e.num).join('
+');
+      html += `<div class="pat-section" data-pat="${pat}">
+        <div class="pat-head">${pat} <span class="pat-count">${items.length} combos</span> <button class="pl-copy pat-copy" data-nums="${patNums.replace(/
+/g,',')}">📋 Copy ${items.length}</button></div>
+        <div class="pat-grid">`;
+      for (const e of items) {
+        const isWinner = winnerSet.has(e.num);
+        const cls = isWinner ? 'fdp-winner' : 'fdp-' + e.bucket;
+        const stTag = e.recent ? `<span class="fdp-st">${e.recent.state} ${e.recent.daysAgo}d</span>` : '';
+        const fire = isWinner ? '🔥 ' : '';
+        html += `<span class="fdp ${cls}" data-bucket="${e.bucket}">${fire}${e.num}${stTag}</span>`;
+      }
+      html += `</div></div>`;
+    }
+
+    el.innerHTML = html;
+    activeFilter = 'all';
+  });
+}
+
+// Shared filter logic
+function applyFilter(filter, exactBucket) {
+  activeFilter = filter;
+  // exactBucket=true: show only that one bucket (stat tile click)
+  // exactBucket=false: cumulative (filter button click)
+  const cumulative = {'all':null, '5d':['5d'], '10d':['5d','10d'], '15d':['5d','10d','15d'], '30d':['5d','10d','15d','30d'], '60d':['5d','10d','15d','30d','60d'], 'none':['none']};
+  const set = exactBucket ? [filter] : cumulative[filter];
+
+  // Show/hide individual chips (only in pattern sections, not PL grid)
+  document.querySelectorAll('.pat-section .fdp').forEach(el => { el.hidden = set !== null && !set.includes(el.dataset.bucket); });
+
+  // Hide empty pattern sections + update per-pattern copy buttons
+  document.querySelectorAll('.pat-section').forEach(sec => {
+    const visible = sec.querySelectorAll('.pat-grid .fdp:not([hidden])');
+    sec.hidden = visible.length === 0;
+    const copyBtn = sec.querySelector('.pat-copy');
+    if (copyBtn) {
+      const nums = [...visible].map(c => { const m = c.textContent.match(/\d{4}/); return m ? m[0] : ''; }).filter(Boolean);
+      copyBtn.dataset.nums = nums.join(',');
+      copyBtn.textContent = '📋 Copy ' + nums.length;
+    }
+  });
+
+  // Sync button + tile active states
+  document.querySelectorAll('.rf-btn').forEach(b => b.classList.toggle('active', b.dataset.rf === filter));
+  document.querySelectorAll('.exp-stat[data-rf]').forEach(s => s.classList.toggle('active', s.dataset.rf === filter));
+
+  // PL banner: show when filtered, hide when "all"
+  const banner = document.getElementById('pl-banner');
+  const plGrid = document.getElementById('pl-grid');
+  if (filter === 'all') {
+    if (banner) banner.hidden = true;
+    if (plGrid) plGrid.hidden = true;
+    document.querySelectorAll('.pat-section').forEach(s => { if (s.querySelectorAll('.fdp').length) s.hidden = false; });
+  } else {
+    const visibleChips = document.querySelectorAll('.pat-section .fdp:not([hidden])');
+    const count = visibleChips.length;
+    const hasWin = [...visibleChips].some(c => c.classList.contains('fdp-winner'));
+    const exactLabels = {'5d':'≤5 Days','10d':'6–10 Days','15d':'11–15 Days','30d':'16–30 Days','60d':'31–60 Days','none':'60d+ / Unseen'};
+    const cumLabels = {'5d':'≤5 Days','10d':'≤10 Days','15d':'≤15 Days','30d':'≤30 Days','60d':'≤60 Days','none':'60d+ / Unseen'};
+    const labels = exactBucket ? exactLabels : cumLabels;
+    if (banner) {
+      banner.hidden = false;
+      banner.className = 'pl-banner' + (hasWin ? ' has-winner' : '');
+      banner.innerHTML = `<div class="pl-banner-title">${hasWin ? '🔥 ' : ''}Playable List: ${count} numbers</div><p class="pl-banner-sub">Cross-state activity within <strong>${labels[filter]||filter}</strong> — down from <strong>${allNums.length}</strong> all-possibles${hasWin ? ' — <strong>winner is here</strong>' : ''}</p>`;
+    }
+    // Build a clean focused PL grid
+    if (plGrid) {
+      plGrid.hidden = false;
+      plGrid.innerHTML = '';
+
+      // Always pin winners at the top, even if they're in a different bucket
+      const allWinnerChips = document.querySelectorAll('.pat-section .fdp.fdp-winner');
+      const pinnedNums = new Set();
+      if (allWinnerChips.length) {
+        const pinSection = document.createElement('div');
+        pinSection.className = 'pl-winners-pinned';
+        pinSection.innerHTML = '<div class="pw-label">🔥 WINNERS (pinned)</div><div class="pw-grid"></div>';
+        const pwGrid = pinSection.querySelector('.pw-grid');
+        allWinnerChips.forEach(chip => {
+          const clone = chip.cloneNode(true);
+          clone.hidden = false;
+          pwGrid.appendChild(clone);
+          pinnedNums.add(chip.textContent.replace(/🔥\s*/, '').split(/[A-Z]/)[0].trim());
+        });
+        plGrid.appendChild(pinSection);
+        const divider = document.createElement('hr');
+        divider.className = 'pl-divider';
+        plGrid.appendChild(divider);
+      }
+
+      // Then the filtered numbers (skip already-pinned winners)
+      const numGrid = document.createElement('div');
+      numGrid.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;justify-content:center';
+      visibleChips.forEach(chip => {
+        if (!chip.classList.contains('fdp-winner')) {
+          const clone = chip.cloneNode(true);
+          clone.hidden = false;
+          numGrid.appendChild(clone);
+        }
+      });
+      plGrid.appendChild(numGrid);
+
+      // Copy button
+      const allNums = [];
+      allWinnerChips.forEach(c => { const m = c.textContent.match(/\d{4}/); if (m) allNums.push(m[0]); });
+      visibleChips.forEach(c => { if (!c.classList.contains('fdp-winner')) { const m = c.textContent.match(/\d{4}/); if (m) allNums.push(m[0]); } });
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'pl-copy';
+      copyBtn.innerHTML = '📋 Copy ' + (count + (allWinnerChips.length - [...allWinnerChips].filter(c => [...visibleChips].some(v => v === c)).length)) + ' numbers';
+      copyBtn.addEventListener('click', () => {
+        const unique = [...new Set(allNums)];
+        navigator.clipboard.writeText(unique.join('
+')).then(() => {
+          copyBtn.classList.add('copied');
+          copyBtn.innerHTML = '✅ Copied ' + unique.length + ' numbers!';
+          setTimeout(() => { copyBtn.classList.remove('copied'); copyBtn.innerHTML = '📋 Copy ' + unique.length + ' numbers'; }, 2000);
+        }).catch(() => {});
+      });
+      plGrid.appendChild(copyBtn);
+    }
+  }
+}
+
+// Filter handler (buttons + stat tiles + pattern copy)
+document.addEventListener('click', e => {
+  // Pattern section copy button
+  const patCopy = e.target.closest('.pat-copy');
+  if (patCopy) {
+    e.stopPropagation();
+    const nums = patCopy.dataset.nums.split(',');
+    const origText = patCopy.innerHTML;
+    navigator.clipboard.writeText(nums.join('
+')).then(() => {
+      patCopy.classList.add('copied');
+      patCopy.innerHTML = '✅ Copied ' + nums.length + '!';
+      setTimeout(() => { patCopy.classList.remove('copied'); patCopy.innerHTML = origText; }, 2000);
+    }).catch(() => {});
+    return;
+  }
+  const rfBtn = e.target.closest('.rf-btn');
+  if (rfBtn) { applyFilter(rfBtn.dataset.rf); return; }
+  const statTile = e.target.closest('.exp-stat[data-rf]');
+  if (statTile) {
+    const b = statTile.dataset.rf;
+    if (activeFilter === b) { applyFilter('all'); }
+    else { applyFilter(b, true); }
+    return;
+  }
+});
+
+// ── NAVIGATION ──
+function showCal() {
+  document.getElementById('view-cal').hidden = false;
+  document.getElementById('view-detail').hidden = true;
+  document.getElementById('view-explore').hidden = true;
+  history.replaceState(null, '', location.pathname);
+}
+
+function showDetail(idx) {
+  CUR_IDX = idx;
+  document.getElementById('view-cal').hidden = true;
+  document.getElementById('view-detail').hidden = false;
+  document.getElementById('view-explore').hidden = true;
+  renderDetail(idx);
+  const t = DATA[idx];
+  if (t) location.hash = t.from_date;
+  window.scrollTo(0, 0);
+}
+
+function showExplorer(pair, refDate) {
+  document.getElementById('view-cal').hidden = true;
+  document.getElementById('view-detail').hidden = true;
+  document.getElementById('view-explore').hidden = false;
+  renderExplorer(pair, refDate);
+  window.scrollTo(0, 0);
+}
+
+document.getElementById('back-btn').addEventListener('click', showCal);
+document.getElementById('back-btn-exp').addEventListener('click', () => {
+  if (CUR_IDX >= 0) showDetail(CUR_IDX);
+  else showCal();
+});
+
+document.addEventListener('click', e => {
+  // Mode toggle (2DP/3DP)
+  const modeBtn = e.target.closest('.mode-btn');
+  if (modeBtn) {
+    const mode = modeBtn.dataset.mode;
+    if (mode !== CUR_MODE) {
+      CUR_MODE = mode;
+      if (CUR_IDX >= 0) {
+        const t = DATA[CUR_IDX];
+        document.getElementById('detail-body').innerHTML = mode === '2dp' ? renderDetail2DP(t) : renderDetail3DP(t);
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+      }
+    }
+    return;
+  }
+
+  const card = e.target.closest('.day-card');
+  if (card) { showDetail(+card.dataset.idx); return; }
+
+  const pairChip = e.target.closest('.pair-chip[data-pair]');
+  if (pairChip && CUR_IDX >= 0) {
+    const pair = pairChip.dataset.pair;
+    const t = DATA[CUR_IDX];
+    showExplorer(pair, t.to_date);
+    return;
+  }
+
+  const head = e.target.closest('.state-row-head');
+  if (head) {
+    const st = head.dataset.state;
+    const det = head.parentElement.querySelector(`[data-detail="${st}"]`);
+    const chev = head.querySelector('.st-chevron');
+    if (det) { det.classList.toggle('open'); if (chev) chev.classList.toggle('open'); }
+  }
+});
+
+window.addEventListener('hashchange', () => {
+  const hash = location.hash.replace('#','');
+  if (!hash) { showCal(); return; }
+  const idx = DATA.findIndex(t => t.from_date === hash);
+  if (idx >= 0) showDetail(idx); else showCal();
+});
+
+async function init() {
+  try {
+    const [carryResp, drawsResp] = await Promise.all([
+      fetch('carry-data.json'),
+      fetch('recent-draws.json')
+    ]);
+    DATA = await carryResp.json();
+    DRAWS = await drawsResp.json();
+  } catch(e) {
+    document.getElementById('day-grid').innerHTML = '<p style="color:var(--miss)">Failed to load data.</p>';
+    return;
+  }
+  const hash = location.hash.replace('#','');
+  if (hash) {
+    const idx = DATA.findIndex(t => t.from_date === hash);
+    if (idx >= 0) { renderCal(); showDetail(idx); return; }
+  }
+  renderCal();
+}
+
+init();
+</script>
+</html>
