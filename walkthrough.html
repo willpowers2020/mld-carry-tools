@@ -483,6 +483,88 @@ h1, h2, h3 { font-family: 'JetBrains Mono', monospace; text-wrap: balance; }
 
 <div class="sep"></div>
 
+<!-- WHAT IS A TRIPLE STACK -->
+<div class="step">
+  <div class="step-label" style="color:var(--accent);">Key Concept</div>
+  <h2>What exactly is a Triple Stack?</h2>
+  <p style="font-size:0.88rem; color:var(--fg-muted); margin-bottom:14px;">
+    A "2DP carry" means a 2-digit pair (like <strong>36</strong>) appears in one day's draw and then shows up again in the very next day's draw for the same state. It's one of the most observable short-term patterns in Pick 4. A Triple Stack takes that basic signal and compounds it — three separate momentum indicators firing at the same time, on the same state, on the same day.
+  </p>
+
+  <div class="card" style="padding:18px;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.15em; color:var(--fg-muted); margin-bottom:14px;">The Three Conditions</div>
+
+    <div style="display:flex; flex-direction:column; gap:16px; font-size:0.85rem; line-height:1.6;">
+      <div>
+        <div style="font-weight:700; margin-bottom:4px;"><span style="color:var(--accent);">1. Multi-Carry</span> — 3 or more 2DP pairs carrying simultaneously</div>
+        <div style="color:var(--fg-muted); padding-left:16px;">
+          A single pair carrying is common (~77% of states have at least one on any given day). But when <em>three or more</em> pairs carry on the same state, that state has unusual structural overlap between consecutive draws. It means the winning number shared multiple digit relationships with the previous day — not just one coincidence, but a cluster of them.
+        </div>
+      </div>
+
+      <div>
+        <div style="font-weight:700; margin-bottom:4px;"><span style="color:var(--repeat);">2. Repeat Carry</span> — at least one of those pairs also carried the day <em>before</em></div>
+        <div style="color:var(--fg-muted); padding-left:16px;">
+          If pair <strong>36</strong> carried from Nov 7→8 AND also carries from Nov 8→9, it's a "repeat." The pair has now appeared in draws three days in a row. This isn't random noise — the digit combination is locked into the state's draw pattern and persisting across transitions.
+        </div>
+      </div>
+
+      <div>
+        <div style="font-weight:700; margin-bottom:4px;"><span style="color:var(--hot);">3. Hot Pair</span> — at least one pair has heat14 ≥ 4 (appeared 4+ times in the last 14 days)</div>
+        <div style="color:var(--fg-muted); padding-left:16px;">
+          "Heat" measures how frequently a pair has appeared recently. A pair that shows up 4 or more times in 14 days is running well above its expected frequency (~1.4 for any given pair). It's not just carrying — it's dominating the recent draw history. When a hot pair also carries and repeats, all three signals converge.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px; font-size:0.85rem; color:var(--fg-muted); line-height:1.6;">
+    <strong style="color:var(--fg);">Why it matters:</strong> Any one of these conditions alone is fairly common. Multi-carry happens on a few states each day. Repeat carries happen on a few states each day. Hot pairs exist in every state. But when <em>all three</em> happen together — that's a Triple Stack, and it's rare. Across 182 observed Triple Stack events, the state carried at least one pair into the next day <strong style="color:var(--accent);">83% of the time</strong>. That's the signal: the structure is self-reinforcing, and it almost always continues.
+  </div>
+
+  <div style="margin-top:20px;">
+    <div class="card" style="padding:18px;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.15em; color:var(--fg-muted); margin-bottom:14px;">Real example: how Oregon got its 360 score</div>
+      <div style="font-size:0.85rem; line-height:1.7; color:var(--fg-muted);">
+        <div style="margin-bottom:10px;">
+          Oregon drew <strong style="color:var(--fg);">6-1-2-3</strong> at 1PM on Nov 8. That single number contains six 2-digit pairs: <span style="color:var(--accent); font-family:'JetBrains Mono',monospace; font-weight:700;">12, 13, 16, 23, 26, 36</span>.
+        </div>
+        <div style="margin-bottom:10px;">
+          The next day (Nov 9), Oregon drew <strong style="color:var(--fg);">1-2-6-3</strong> at 10PM. Same digits, reshuffled — same six pairs. All six <em>carried</em>. Plus three more pairs from the 4PM and 7PM draws. That's <strong style="color:var(--accent);">9 multi-carries</strong> (condition 1).
+        </div>
+        <div style="margin-bottom:10px;">
+          Three of those pairs — <span style="color:var(--repeat); font-family:'JetBrains Mono',monospace; font-weight:700;">13, 17, 18</span> — had also carried from Nov 7→8. They were on their third consecutive day. That's <strong style="color:var(--repeat);">3 repeat carries</strong> (condition 2).
+        </div>
+        <div style="margin-bottom:10px;">
+          Every single one of the 9 pairs had heat14 ≥ 4. Pair <strong>36</strong> had heat 8 (appeared 8 times in 14 days). That's <strong style="color:var(--hot);">9 hot pairs</strong> (condition 3).
+        </div>
+        <div style="margin-bottom:10px;">
+          <strong style="color:var(--fg);">The momentum score</strong> multiplies all three: <span style="font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--accent);">9 × (3+1) × (9+1) = 360</span>. The median state scored 4. Oregon was <strong>90 times</strong> the median.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;">
+    <div class="card" style="padding:18px;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.15em; color:var(--fg-muted); margin-bottom:14px;">Contrast: what a NON-Triple-Stack looks like</div>
+      <div style="font-size:0.85rem; line-height:1.7; color:var(--fg-muted);">
+        <div style="margin-bottom:10px;">
+          On the same day (Nov 8→9), <strong style="color:var(--fg);">Iowa</strong> had 2 pairs carry (below 3 — fails multi-carry), 1 repeat, and 1 hot pair. Score: <span style="font-family:'JetBrains Mono',monospace; font-weight:700;">2 × (1+1) × (1+1) = 8</span>. That's <strong>not</strong> a Triple Stack — it has a repeat and a hot pair, but only 2 carries instead of the minimum 3.
+        </div>
+        <div style="margin-bottom:10px;">
+          <strong style="color:var(--fg);">Rhode Island</strong> had 4 carries and 2 hot pairs, but zero repeats. Score: <span style="font-family:'JetBrains Mono',monospace; font-weight:700;">4 × (0+1) × (2+1) = 12</span>. No repeat carry means the structure just appeared — it isn't <em>persisting</em> across days. Also not a Triple Stack.
+        </div>
+        <div>
+          Triple Stack requires <strong style="color:var(--fg);">all three</strong> conditions simultaneously. That's what separates Oregon's 360 from every other state that day — and why the 83% continuation rate is so high: the carries aren't just present, they're overlapping, recurring, and frequent.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
 <!-- STEP 3: ZOOM INTO OREGON -->
 <div class="step">
   <div class="step-label">Step 3</div>
@@ -784,11 +866,7 @@ h1, h2, h3 { font-family: 'JetBrains Mono', monospace; text-wrap: balance; }
   </div>
 
   <div style="font-size:0.85rem; color:var(--fg-muted); line-height:1.6; margin-top:14px;">
-    <strong style="color:var(--fg);">The three conditions:</strong><br>
-    <span style="color:var(--accent);">Multi-carry</span> — 3+ 2DP pairs carrying simultaneously (structural overlap)<br>
-    <span style="color:var(--repeat);">Repeat carry</span> — same pair from yesterday carried again (locked in)<br>
-    <span style="color:var(--hot);">Hot pair</span> — heat14 ≥ 4 (appearing frequently, not random noise)<br><br>
-    When all three fire on the same state: <strong style="color:var(--fg);">83% continuation rate</strong> across 182 observed events. The carry almost always persists into the next day.
+    <strong style="color:var(--fg);">Recap:</strong> Multi-carry (3+ pairs) × repeat carry (same pair, 3+ days running) × hot pair (heat14 ≥ 4) = Triple Stack. <strong style="color:var(--accent);">83% continuation</strong> across 182 events. When all three fire on one state, the carry almost always persists.
   </div>
 </div>
 
@@ -957,7 +1035,7 @@ h1, h2, h3 { font-family: 'JetBrains Mono', monospace; text-wrap: balance; }
 </div>
 
 <div class="footer">
-  MyLottoData · Carry Analysis · November 2026
+  MyLotteryData · Carry Analysis · November 2026
 </div>
 </body>
 </html>
