@@ -2,8 +2,8 @@ name: Update carry data
 
 on:
   schedule:
-    # Run daily at 6 AM UTC (after all evening draws are in)
-    - cron: "0 6 * * *"
+    # Run daily at 8 AM UTC (midnight PST — all states' evening draws are in)
+    - cron: "0 8 * * *"
   workflow_dispatch:
 
 permissions:
