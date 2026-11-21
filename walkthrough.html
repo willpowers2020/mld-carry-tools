@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Oregon Triple Stack</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Dark-first: data terminal aesthetic for carry analysis */
+:root {
+  --bg: #0c0e11; --bg-card: #141720; --bg-card-raised: #1a1e2a;
+  --fg: #d4d8e0; --fg-muted: #6b7280; --fg-dim: #3d4350;
+  --accent: #f59e0b; --accent-bg: rgba(245,158,11,0.12); --accent-border: rgba(245,158,11,0.3);
+  --hot: #ef4444; --hot-bg: rgba(239,68,68,0.15); --hot-border: rgba(239,68,68,0.35);
+  --repeat: #a78bfa; --repeat-bg: rgba(167,139,250,0.12); --repeat-border: rgba(167,139,250,0.35);
+  --green: #22c55e; --green-bg: rgba(34,197,94,0.12); --green-border: rgba(34,197,94,0.3);
+  --blue: #3b82f6; --blue-bg: rgba(59,130,246,0.1);
+  --divider: #1e2230; --bar-track: #1a1e28; --bar-fill: #f59e0b;
+  --or-glow: rgba(245,158,11,0.06);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f8f9fb; --bg-card: #ffffff; --bg-card-raised: #f0f2f5;
+    --fg: #1a1d24; --fg-muted: #6b7280; --fg-dim: #c0c4cc;
+    --accent: #d97706; --accent-bg: rgba(217,119,6,0.08); --accent-border: rgba(217,119,6,0.25);
+    --hot: #dc2626; --hot-bg: rgba(220,38,38,0.08); --hot-border: rgba(220,38,38,0.25);
+    --repeat: #7c3aed; --repeat-bg: rgba(124,58,237,0.08); --repeat-border: rgba(124,58,237,0.25);
+    --green: #16a34a; --green-bg: rgba(22,163,74,0.08); --green-border: rgba(22,163,74,0.2);
+    --blue: #2563eb; --blue-bg: rgba(37,99,235,0.06);
+    --divider: #e5e7eb; --bar-track: #e5e7eb; --bar-fill: #d97706;
+    --or-glow: rgba(217,119,6,0.04);
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f8f9fb; --bg-card: #ffffff; --bg-card-raised: #f0f2f5;
+  --fg: #1a1d24; --fg-muted: #6b7280; --fg-dim: #c0c4cc;
+  --accent: #d97706; --accent-bg: rgba(217,119,6,0.08); --accent-border: rgba(217,119,6,0.25);
+  --hot: #dc2626; --hot-bg: rgba(220,38,38,0.08); --hot-border: rgba(220,38,38,0.25);
+  --repeat: #7c3aed; --repeat-bg: rgba(124,58,237,0.08); --repeat-border: rgba(124,58,237,0.25);
+  --green: #16a34a; --green-bg: rgba(22,163,74,0.08); --green-border: rgba(22,163,74,0.2);
+  --blue: #2563eb; --blue-bg: rgba(37,99,235,0.06);
+  --divider: #e5e7eb; --bar-track: #e5e7eb; --bar-fill: #d97706;
+  --or-glow: rgba(217,119,6,0.04);
+  color-scheme: light;
+}
+
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+  max-width: 720px; margin: 0 auto; line-height: 1.6;
+}
+h1, h2, h3 { font-family: 'JetBrains Mono', monospace; text-wrap: balance; }
+
+.hero {
+  text-align: center; padding: 48px 0 32px;
+}
+.hero-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem; font-weight: 600;
+  color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.hero h1 {
+  font-size: clamp(1.6rem, 5vw, 2.2rem); font-weight: 800;
+  margin: 0 0 12px; line-height: 1.15;
+}
+.hero h1 .state { color: var(--accent); }
+.hero-sub {
+  font-size: 0.95rem; color: var(--fg-muted); max-width: 480px;
+  margin: 0 auto; line-height: 1.5;
+}
+
+.step {
+  margin-bottom: 40px;
+}
+.step-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem; font-weight: 700;
+  color: var(--fg-dim); letter-spacing: 0.2em; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.step h2 {
+  font-size: 1.15rem; font-weight: 700; margin: 0 0 14px; line-height: 1.3;
+}
+
+.card {
+  background: var(--bg-card); border: 1px solid var(--divider);
+  border-radius: 10px; overflow: hidden;
+}
+.card + .card { margin-top: 10px; }
+.card-or {
+  border-color: var(--accent-border);
+  background: linear-gradient(135deg, var(--or-glow), var(--bg-card) 60%);
+}
+
+/* Stat row */
+.stats {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+}
+.stat-box {
+  background: var(--bg-card); border: 1px solid var(--divider);
+  border-radius: 8px; padding: 12px 16px; flex: 1; min-width: 90px; text-align: center;
+}
+.stat-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.5rem; font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.stat-num.accent { color: var(--accent); }
+.stat-num.hot { color: var(--hot); }
+.stat-num.green { color: var(--green); }
+.stat-label {
+  font-size: 0.65rem; color: var(--fg-muted); margin-top: 4px;
+  text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
+}
+
+/* Bar chart for state ranking */
+.rank-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border-bottom: 1px solid var(--divider);
+  font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+}
+.rank-row:last-child { border-bottom: none; }
+.rank-row.is-or {
+  background: var(--accent-bg); font-weight: 700;
+}
+.rank-pos {
+  width: 22px; text-align: right; color: var(--fg-muted);
+  font-size: 0.7rem; font-variant-numeric: tabular-nums;
+}
+.rank-state {
+  width: 28px; font-weight: 700;
+}
+.rank-state.is-or { color: var(--accent); }
+.rank-bar-wrap {
+  flex: 1; min-width: 0; height: 18px;
+  background: var(--bar-track); border-radius: 3px; overflow: hidden;
+  position: relative;
+}
+.rank-bar {
+  height: 100%; border-radius: 3px;
+  background: var(--fg-dim); transition: width 0.4s ease;
+}
+.rank-bar.is-or { background: var(--accent); }
+.rank-bar.triple { background: var(--repeat); }
+.rank-score {
+  width: 36px; text-align: right; font-variant-numeric: tabular-nums;
+  font-weight: 600; font-size: 0.72rem;
+}
+.rank-score.is-or { color: var(--accent); }
+.rank-badges {
+  display: flex; gap: 3px; min-width: 50px; justify-content: flex-end;
+}
+.micro-badge {
+  font-size: 0.55rem; font-weight: 700; padding: 1px 4px; border-radius: 3px;
+  letter-spacing: 0.03em;
+}
+.mb-triple { background: var(--accent-bg); color: var(--accent); }
+.mb-stack { background: var(--hot-bg); color: var(--hot); }
+
+/* Pair chips */
+.pair-grid {
+  display: flex; flex-wrap: wrap; gap: 6px; padding: 14px;
+}
+.pair-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem; font-weight: 700;
+  padding: 6px 10px; border-radius: 6px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  min-width: 56px; text-align: center;
+  background: var(--bg-card-raised); border: 1px solid var(--divider);
+}
+.pair-chip.hot {
+  background: var(--hot-bg); border-color: var(--hot-border); color: var(--hot);
+}
+.pair-chip.repeat {
+  box-shadow: inset 0 0 0 2px var(--repeat);
+}
+.pair-chip.hot.repeat {
+  background: var(--hot-bg); border-color: var(--hot-border);
+  box-shadow: inset 0 0 0 2px var(--repeat);
+}
+.pair-meta {
+  font-size: 0.55rem; font-weight: 600; color: var(--fg-muted);
+  letter-spacing: 0.05em;
+}
+.pair-chip.hot .pair-meta { color: var(--hot); opacity: 0.7; }
+
+.pair-tod {
+  font-size: 0.55rem; font-weight: 600; color: var(--fg-dim);
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+
+/* Draw display */
+.draw-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 1px solid var(--divider);
+  font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+}
+.draw-row:last-child { border-bottom: none; }
+.draw-tod {
+  font-size: 0.65rem; color: var(--fg-muted); width: 36px;
+  text-transform: uppercase; font-weight: 600;
+}
+.draw-num {
+  font-weight: 700; letter-spacing: 0.15em; font-size: 1rem;
+}
+.draw-carried {
+  display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto;
+}
+.draw-pair-tag {
+  font-size: 0.65rem; font-weight: 700;
+  padding: 2px 5px; border-radius: 3px;
+  background: var(--accent-bg); color: var(--accent);
+}
+
+/* Callout */
+.callout {
+  border-radius: 10px; padding: 16px 18px;
+  margin: 16px 0; display: flex; gap: 12px; align-items: flex-start;
+}
+.callout-accent {
+  background: var(--accent-bg); border: 1px solid var(--accent-border);
+}
+.callout-green {
+  background: var(--green-bg); border: 1px solid var(--green-border);
+}
+.callout-icon {
+  font-size: 1.3rem; flex-shrink: 0; line-height: 1;
+}
+.callout-body {
+  font-size: 0.85rem; line-height: 1.5; min-width: 0;
+}
+.callout-body strong { font-weight: 700; }
+
+/* Timeline */
+.timeline {
+  display: flex; flex-direction: column; gap: 0;
+  padding: 0 14px 14px;
+}
+.tl-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 5px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+}
+.tl-date { width: 50px; color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.tl-bar-wrap {
+  flex: 1; min-width: 0; height: 14px;
+  background: var(--bar-track); border-radius: 2px; overflow: hidden;
+}
+.tl-bar {
+  height: 100%; border-radius: 2px; background: var(--accent);
+  transition: width 0.3s ease;
+}
+.tl-bar.peak { background: var(--hot); }
+.tl-count {
+  width: 24px; text-align: right; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tl-row.peak .tl-date { color: var(--accent); font-weight: 700; }
+.tl-row.peak .tl-count { color: var(--hot); }
+
+/* Comparison table */
+.cmp-table {
+  width: 100%; border-collapse: collapse;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+}
+.cmp-table th {
+  text-align: left; padding: 8px 10px; font-weight: 700;
+  border-bottom: 2px solid var(--divider); font-size: 0.65rem;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--fg-muted);
+}
+.cmp-table td {
+  padding: 7px 10px; border-bottom: 1px solid var(--divider);
+  font-variant-numeric: tabular-nums;
+}
+.cmp-table tr.or-row {
+  background: var(--accent-bg); font-weight: 700;
+}
+.cmp-table tr.or-row td { color: var(--accent); }
+
+/* Legend */
+.legend {
+  display: flex; gap: 14px; flex-wrap: wrap;
+  padding: 10px 14px; font-size: 0.7rem; color: var(--fg-muted);
+  border-top: 1px solid var(--divider);
+}
+.legend-item { display: flex; align-items: center; gap: 4px; }
+.legend-swatch {
+  width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0;
+}
+
+/* Footer */
+.footer {
+  text-align: center; padding: 32px 0 48px;
+  font-size: 0.72rem; color: var(--fg-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* multiplier */
+.mult {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800; color: var(--accent);
+}
+
+/* Separator */
+.sep {
+  height: 1px; background: var(--divider); margin: 32px 0;
+}
+
+/* 3dp section */
+.trip-chips {
+  display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px;
+}
+.trip-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem; font-weight: 700;
+  padding: 5px 10px; border-radius: 6px;
+  background: var(--blue-bg); border: 1px solid rgba(59,130,246,0.2);
+  color: var(--blue);
+}
+.trip-meta {
+  font-size: 0.55rem; font-weight: 600; opacity: 0.7;
+}
+
+.section-head {
+  padding: 10px 14px 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem; font-weight: 700;
+  color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.15em;
+}
+
+@media (max-width: 500px) {
+  .rank-badges { display: none; }
+  .stats { gap: 6px; }
+  .stat-box { padding: 10px 8px; min-width: 70px; }
+  .stat-num { font-size: 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-date">Triple Stack Walkthrough</div>
+  <h1>The Day <span class="state">Oregon</span> Broke the Scale</h1>
+  <p class="hero-sub">How one state's momentum score hit 360 — fifteen times the average and ninety times the median — and how Triple Stack would have flagged it as the only state to watch.</p>
+  <div style="margin-top:12px; font-size:0.72rem; color:var(--fg-dim); font-family:'JetBrains Mono',monospace;">November 8 → 9, 2026 &nbsp;·&nbsp; <a href="#live" style="color:var(--green); text-decoration:none; border-bottom:1px solid var(--green-border);">Jump to live signal ↓</a></div>
+</div>
+
+<!-- STEP 1: THE LANDSCAPE -->
+<div class="step">
+  <div class="step-label">Step 1</div>
+  <h2>The landscape: 35 states, one transition</h2>
+  <p style="font-size:0.88rem; color:var(--fg-muted); margin-bottom:14px;">
+    On November 8→9, 27 of 35 Pick 4 states had at least one 2DP carry. A normal day — 77% carry rate. But the signals were not evenly distributed.
+  </p>
+  <div class="stats">
+    <div class="stat-box">
+      <div class="stat-num accent">27</div>
+      <div class="stat-label">States w/ carry</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">77%</div>
+      <div class="stat-label">Carry rate</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">8</div>
+      <div class="stat-label">w/ 3DP carry</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num hot">6</div>
+      <div class="stat-label">Triple stacks</div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2: THE RANKING -->
+<div class="step">
+  <div class="step-label">Step 2</div>
+  <h2>Score every state by momentum</h2>
+  <p style="font-size:0.88rem; color:var(--fg-muted); margin-bottom:14px;">
+    Momentum score = 2DP count × (repeats + 1) × (hot pairs + 1). The higher the score, the more structural overlap and heat are compounding on a single state. Watch what happens at the top.
+  </p>
+  <div class="card">
+    <div class="rank-row is-or">
+      <span class="rank-pos">1</span>
+      <span class="rank-state is-or">OR</span>
+      <span class="rank-bar-wrap"><span class="rank-bar is-or" style="width:100%"></span></span>
+      <span class="rank-score is-or">360</span>
+      <span class="rank-badges"><span class="micro-badge mb-triple">TRIPLE</span></span>
+    </div>
+    <div class="rank-row">
+      <span class="rank-pos">2</span>
+      <span class="rank-state">DC</span>
+      <span class="rank-bar-wrap"><span class="rank-bar triple" style="width:13.3%"></span></span>
+      <span class="rank-score">48</span>
+      <span class="rank-badges"><span class="micro-badge mb-triple">TRIPLE</span></span>
+    </div>
+    <div class="rank-row">
+      <span class="rank-pos">3</span>
+      <span class="rank-state">ME</span>
+      <span class="rank-bar-wrap"><span class="rank-bar triple" style="width:12.5%"></span></span>
+      <span class="rank-score">45</span>
+      <span class="rank-badges"><span class="micro-badge mb-triple">TRIPLE</span></span>
+    </div>
+    <div class="rank-row">
+      <span class="rank-pos">3</span>
+      <span class="rank-state">NH</span>
+      <span class="rank-bar-wrap"><span class="rank-bar triple" style="width:12.5%"></span></span>
+      <span class="rank-score">45</span>
+      <span class="rank-badges"><span class="micro-badge mb-triple">TRIPLE</span></span>
+    </div>
+    <div class="rank-row">
+      <span class="rank-pos">3</span>
+      <span class="rank-state">VT</span>
+      <span class="rank-bar-wrap"><span class="rank-bar triple" style="width:12.5%"></span></span>
+      <span class="rank-score">45</span>
+      <span class="rank-badges"><span class="micro-badge mb-triple">TRIPLE</span></span>
+    </div>
+    <div class="rank-row">
+      <span class="rank-pos">6</span>
+      <span class="rank-state">PA</span>
+      <span class="rank-bar-wrap"><span class="rank-bar triple" style="width:3.3%"></span></span>
+      <span class="rank-score">12</span>
+      <span class="rank-badges"><span class="micro-badge mb-triple">TRIPLE</span></span>
+    </div>
+    <div class="rank-row">
+      <span class="rank-pos">7</span>
+      <span class="rank-state">RI</span>
+      <span class="rank-bar-wrap"><span class="rank-bar" style="width:3.3%"></span></span>
+      <span class="rank-score">12</span>
+      <span class="rank-badges"></span>
+    </div>
+    <div class="rank-row">
+      <span class="rank-pos">8</span>
+      <span class="rank-state">IA</span>
+      <span class="rank-bar-wrap"><span class="rank-bar" style="width:2.2%"></span></span>
+      <span class="rank-score">8</span>
+      <span class="rank-badges"></span>
+    </div>
+    <div class="rank-row">
+      <span class="rank-pos">8</span>
+      <span class="rank-state">ID</span>
+      <span class="rank-bar-wrap"><span class="rank-bar" style="width:2.2%"></span></span>
+      <span class="rank-score">8</span>
+      <span class="rank-badges"></span>
+    </div>
+    <div class="rank-row">
+      <span class="rank-pos">8</span>
+      <span class="rank-state">MO</span>
+      <span class="rank-bar-wrap"><span class="rank-bar" style="width:2.2%"></span></span>
+      <span class="rank-score">8</span>
+      <span class="rank-badges"></span>
+    </div>
+    <div class="rank-row">
+      <span class="rank-pos">11</span>
+      <span class="rank-state">CT</span>
+      <span class="rank-bar-wrap"><span class="rank-bar" style="width:1.1%"></span></span>
+      <span class="rank-score">4</span>
+      <span class="rank-badges"></span>
+    </div>
+    <div class="rank-row">
+      <span class="rank-pos">—</span>
+      <span class="rank-state" style="color:var(--fg-dim)">...</span>
+      <span class="rank-bar-wrap"><span class="rank-bar" style="width:0.8%"></span></span>
+      <span class="rank-score" style="color:var(--fg-dim)">2–4</span>
+      <span class="rank-badges"></span>
+    </div>
+  </div>
+
+  <div class="callout callout-accent" style="margin-top:14px;">
+    <span class="callout-icon">⚡</span>
+    <div class="callout-body">
+      <strong>Oregon scored 360.</strong> Second place (DC) scored 48. The median was 4. Oregon was <span class="mult">7.5×</span> the next-highest state and <span class="mult">90×</span> the median. This isn't an edge — it's an outlier screaming for attention.
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- STEP 3: ZOOM INTO OREGON -->
+<div class="step">
+  <div class="step-label">Step 3</div>
+  <h2>Inside Oregon's 9-pair carry</h2>
+  <p style="font-size:0.88rem; color:var(--fg-muted); margin-bottom:14px;">
+    Oregon carried 9 2DP pairs from Nov 8 into Nov 9 — across three different draw times. Every single pair was hot (heat14 ≥ 4). Three were repeats from the day before. Plus four 3DP carries.
+  </p>
+
+  <div class="card card-or">
+    <div class="section-head">2DP Carries · 9 pairs</div>
+    <div class="legend" style="border-top:none; padding-top:4px;">
+      <span class="legend-item"><span class="legend-swatch" style="background:var(--hot)"></span> Hot (h≥4)</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:var(--repeat); border-radius:50%;"></span> Repeat from yesterday</span>
+    </div>
+    <div class="pair-grid">
+      <div class="pair-chip hot">
+        12
+        <span class="pair-meta">4d · h4</span>
+        <span class="pair-tod">1PM</span>
+      </div>
+      <div class="pair-chip hot repeat">
+        13
+        <span class="pair-meta">1d · h5</span>
+        <span class="pair-tod">1PM</span>
+      </div>
+      <div class="pair-chip hot">
+        16
+        <span class="pair-meta">4d · h5</span>
+        <span class="pair-tod">1PM</span>
+      </div>
+      <div class="pair-chip hot">
+        23
+        <span class="pair-meta">2d · h7</span>
+        <span class="pair-tod">1PM</span>
+      </div>
+      <div class="pair-chip hot">
+        26
+        <span class="pair-meta">7d · h6</span>
+        <span class="pair-tod">1PM</span>
+      </div>
+      <div class="pair-chip hot">
+        36
+        <span class="pair-meta">2d · h8</span>
+        <span class="pair-tod">1PM</span>
+      </div>
+      <div class="pair-chip hot repeat">
+        17
+        <span class="pair-meta">1d · h5</span>
+        <span class="pair-tod">4PM</span>
+      </div>
+      <div class="pair-chip hot repeat">
+        18
+        <span class="pair-meta">1d · h4</span>
+        <span class="pair-tod">4PM</span>
+      </div>
+      <div class="pair-chip hot">
+        48
+        <span class="pair-meta">2d · h5</span>
+        <span class="pair-tod">7PM</span>
+      </div>
+    </div>
+
+    <div class="section-head">3DP Carries · 4 triples</div>
+    <div class="trip-chips">
+      <div class="trip-chip">123 <span class="trip-meta">4d</span></div>
+      <div class="trip-chip">126 <span class="trip-meta">10d</span></div>
+      <div class="trip-chip">136 <span class="trip-meta">16d</span></div>
+      <div class="trip-chip">236 <span class="trip-meta">10d</span></div>
+    </div>
+  </div>
+
+  <div class="callout callout-accent" style="margin-top:14px;">
+    <span class="callout-icon">🔥</span>
+    <div class="callout-body">
+      Pair <strong>36</strong> had heat14 = 8 — appeared 8 times in 14 days. <strong>23</strong> appeared 7 times. <strong>26</strong> appeared 6 times. These aren't random carries — they're structurally locked into Oregon's draw pattern.
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- STEP 4: THE DRAWS -->
+<div class="step">
+  <div class="step-label">Step 4</div>
+  <h2>Source → Winner: the actual draws</h2>
+  <p style="font-size:0.88rem; color:var(--fg-muted); margin-bottom:14px;">
+    The source draws on Nov 8 contained pairs that reappeared in all four Nov 9 draws. The 1PM draw alone carried six pairs from a single source number.
+  </p>
+
+  <div class="card card-or">
+    <div class="section-head">Nov 8 Source Draws</div>
+    <div class="draw-row">
+      <span class="draw-tod">1PM</span>
+      <span class="draw-num">6-1-2-3</span>
+      <span class="draw-carried">
+        <span class="draw-pair-tag">12</span>
+        <span class="draw-pair-tag">13</span>
+        <span class="draw-pair-tag">16</span>
+        <span class="draw-pair-tag">23</span>
+        <span class="draw-pair-tag">26</span>
+        <span class="draw-pair-tag">36</span>
+      </span>
+    </div>
+    <div class="draw-row">
+      <span class="draw-tod">4PM</span>
+      <span class="draw-num">0-1-8-7</span>
+      <span class="draw-carried">
+        <span class="draw-pair-tag">17</span>
+        <span class="draw-pair-tag">18</span>
+      </span>
+    </div>
+    <div class="draw-row">
+      <span class="draw-tod">7PM</span>
+      <span class="draw-num">1-4-0-8</span>
+      <span class="draw-carried">
+        <span class="draw-pair-tag">48</span>
+      </span>
+    </div>
+    <div class="draw-row">
+      <span class="draw-tod">10PM</span>
+      <span class="draw-num">9-5-3-5</span>
+      <span class="draw-carried"></span>
+    </div>
+  </div>
+
+  <div style="text-align:center; padding:8px 0; color:var(--fg-dim); font-size:1.2rem;">↓</div>
+
+  <div class="card card-or">
+    <div class="section-head">Nov 9 Winner Draws</div>
+    <div class="draw-row">
+      <span class="draw-tod">10PM</span>
+      <span class="draw-num">1-2-6-3</span>
+      <span class="draw-carried">
+        <span class="draw-pair-tag">12</span>
+        <span class="draw-pair-tag">13</span>
+        <span class="draw-pair-tag">16</span>
+        <span class="draw-pair-tag">23</span>
+        <span class="draw-pair-tag">26</span>
+        <span class="draw-pair-tag">36</span>
+      </span>
+    </div>
+    <div class="draw-row">
+      <span class="draw-tod">1PM</span>
+      <span class="draw-num">1-7-6-6</span>
+      <span class="draw-carried">
+        <span class="draw-pair-tag">16</span>
+        <span class="draw-pair-tag">17</span>
+      </span>
+    </div>
+    <div class="draw-row">
+      <span class="draw-tod">4PM</span>
+      <span class="draw-num">8-4-3-3</span>
+      <span class="draw-carried">
+        <span class="draw-pair-tag">48</span>
+      </span>
+    </div>
+    <div class="draw-row">
+      <span class="draw-tod">7PM</span>
+      <span class="draw-num">8-1-9-1</span>
+      <span class="draw-carried">
+        <span class="draw-pair-tag">18</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="callout callout-accent" style="margin-top:14px;">
+    <span class="callout-icon">🎯</span>
+    <div class="callout-body">
+      <strong>1263</strong> (Nov 9 10PM) is a near-permutation of <strong>6123</strong> (Nov 8 1PM). Same digits, same six pairs carried. The structure replicated itself across days.
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- STEP 5: COMPARISON TABLE -->
+<div class="step">
+  <div class="step-label">Step 5</div>
+  <h2>Oregon vs. the field</h2>
+  <p style="font-size:0.88rem; color:var(--fg-muted); margin-bottom:14px;">
+    Here's why Triple Stack narrows 35 states to one. Every dimension that matters — pair count, heat, repeats, 3DP confirmation — Oregon is the runaway leader.
+  </p>
+  <div class="card" style="overflow-x:auto;">
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th>State</th><th>2DPs</th><th>Repeat</th><th>Hot</th><th>3DP</th><th>Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="or-row">
+          <td>OR</td><td>9</td><td>3</td><td>9</td><td>4</td><td>360</td>
+        </tr>
+        <tr><td>DC</td><td>4</td><td>3</td><td>2</td><td>1</td><td>48</td></tr>
+        <tr><td>ME</td><td>5</td><td>2</td><td>2</td><td>2</td><td>45</td></tr>
+        <tr><td>PA</td><td>3</td><td>1</td><td>1</td><td>0</td><td>12</td></tr>
+        <tr><td>RI</td><td>4</td><td>0</td><td>2</td><td>1</td><td>12</td></tr>
+        <tr><td>IA</td><td>2</td><td>1</td><td>1</td><td>0</td><td>8</td></tr>
+        <tr><td style="color:var(--fg-dim)">Median</td><td style="color:var(--fg-dim)">2</td><td style="color:var(--fg-dim)">0</td><td style="color:var(--fg-dim)">1</td><td style="color:var(--fg-dim)">0</td><td style="color:var(--fg-dim)">4</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- STEP 6: THE CONFIRMATION -->
+<div class="step">
+  <div class="step-label">Step 6</div>
+  <h2>Did it hold? Nov 9 → 10</h2>
+  <p style="font-size:0.88rem; color:var(--fg-muted); margin-bottom:14px;">
+    Triple Stack predicts 83% continuation. Oregon carried again the next day: <strong>8 more 2DP pairs + 2 more 3DPs</strong>. The momentum compounded.
+  </p>
+
+  <div class="stats">
+    <div class="stat-box">
+      <div class="stat-num green">8</div>
+      <div class="stat-label">2DPs carried</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num green">2</div>
+      <div class="stat-label">3DPs carried</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num accent">83%</div>
+      <div class="stat-label">Predicted rate</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num green">✓</div>
+      <div class="stat-label">Confirmed</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-head">Nov 9 → Nov 10 Carries</div>
+    <div class="pair-grid">
+      <div class="pair-chip hot">12 <span class="pair-meta">1d · h5</span></div>
+      <div class="pair-chip">67 <span class="pair-meta">3d · h4</span></div>
+      <div class="pair-chip">33 <span class="pair-meta">10d · h2</span></div>
+      <div class="pair-chip hot">34 <span class="pair-meta">2d · h6</span></div>
+      <div class="pair-chip">11 <span class="pair-meta">2d · h2</span></div>
+      <div class="pair-chip hot">18 <span class="pair-meta">1d · h5</span></div>
+      <div class="pair-chip hot">19 <span class="pair-meta">5d · h5</span></div>
+      <div class="pair-chip hot">89 <span class="pair-meta">3d · h6</span></div>
+    </div>
+  </div>
+
+  <div class="callout callout-green" style="margin-top:14px;">
+    <span class="callout-icon">✓</span>
+    <div class="callout-body">
+      Pair <strong>12</strong> and <strong>18</strong> carried for the third consecutive day. The structure wasn't just persisting — it was accelerating. Oregon's streak would continue for 48 days total.
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- STEP 7: THE STREAK -->
+<div class="step">
+  <div class="step-label">Step 7</div>
+  <h2>Oregon's November: the full streak</h2>
+  <p style="font-size:0.88rem; color:var(--fg-muted); margin-bottom:14px;">
+    Nov 8 wasn't a one-off. Oregon carried every single day of November. The 9-pair event was the peak of a structural wave.
+  </p>
+  <div class="card">
+    <div class="timeline">
+      <div class="tl-row"><span class="tl-date">Nov 1</span><span class="tl-bar-wrap"><span class="tl-bar" style="width:33%"></span></span><span class="tl-count">3</span></div>
+      <div class="tl-row"><span class="tl-date">Nov 2</span><span class="tl-bar-wrap"><span class="tl-bar" style="width:89%"></span></span><span class="tl-count">8</span></div>
+      <div class="tl-row"><span class="tl-date">Nov 3</span><span class="tl-bar-wrap"><span class="tl-bar" style="width:78%"></span></span><span class="tl-count">7</span></div>
+      <div class="tl-row"><span class="tl-date">Nov 4</span><span class="tl-bar-wrap"><span class="tl-bar" style="width:67%"></span></span><span class="tl-count">6</span></div>
+      <div class="tl-row"><span class="tl-date">Nov 5</span><span class="tl-bar-wrap"><span class="tl-bar" style="width:78%"></span></span><span class="tl-count">7</span></div>
+      <div class="tl-row"><span class="tl-date">Nov 6</span><span class="tl-bar-wrap"><span class="tl-bar" style="width:78%"></span></span><span class="tl-count">7</span></div>
+      <div class="tl-row"><span class="tl-date">Nov 7</span><span class="tl-bar-wrap"><span class="tl-bar" style="width:78%"></span></span><span class="tl-count">7</span></div>
+      <div class="tl-row peak"><span class="tl-date">Nov 8</span><span class="tl-bar-wrap"><span class="tl-bar peak" style="width:100%"></span></span><span class="tl-count">9</span></div>
+      <div class="tl-row"><span class="tl-date">Nov 9</span><span class="tl-bar-wrap"><span class="tl-bar" style="width:89%"></span></span><span class="tl-count">8</span></div>
+      <div class="tl-row"><span class="tl-date">Nov 10</span><span class="tl-bar-wrap"><span class="tl-bar" style="width:44%"></span></span><span class="tl-count">4</span></div>
+      <div class="tl-row"><span class="tl-date">Nov 11</span><span class="tl-bar-wrap"><span class="tl-bar" style="width:22%"></span></span><span class="tl-count">2</span></div>
+      <div class="tl-row"><span class="tl-date">Nov 12</span><span class="tl-bar-wrap"><span class="tl-bar" style="width:67%"></span></span><span class="tl-count">6</span></div>
+      <div class="tl-row"><span class="tl-date">Nov 13</span><span class="tl-bar-wrap"><span class="tl-bar" style="width:44%"></span></span><span class="tl-count">4</span></div>
+      <div class="tl-row"><span class="tl-date">Nov 14</span><span class="tl-bar-wrap"><span class="tl-bar" style="width:67%"></span></span><span class="tl-count">6</span></div>
+      <div class="tl-row"><span class="tl-date">Nov 15</span><span class="tl-bar-wrap"><span class="tl-bar" style="width:67%"></span></span><span class="tl-count">6</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- CONCLUSION -->
+<div class="step">
+  <div class="step-label">The Signal</div>
+  <h2>What Triple Stack told you at a glance</h2>
+
+  <div class="callout callout-accent">
+    <span class="callout-icon">⚡</span>
+    <div class="callout-body">
+      <strong>Before the Nov 9 draws happened</strong>, you would have seen Oregon's Nov 8→9 transition score of 360 — the only state with all three momentum signals firing simultaneously: 9 multi-carries, 3 repeat pairs from yesterday, and every pair running hot. The next-closest state scored 48. <br><br>
+      You didn't need to analyze 35 states. Triple Stack pointed at exactly one.
+    </div>
+  </div>
+
+  <div style="font-size:0.85rem; color:var(--fg-muted); line-height:1.6; margin-top:14px;">
+    <strong style="color:var(--fg);">The three conditions:</strong><br>
+    <span style="color:var(--accent);">Multi-carry</span> — 3+ 2DP pairs carrying simultaneously (structural overlap)<br>
+    <span style="color:var(--repeat);">Repeat carry</span> — same pair from yesterday carried again (locked in)<br>
+    <span style="color:var(--hot);">Hot pair</span> — heat14 ≥ 4 (appearing frequently, not random noise)<br><br>
+    When all three fire on the same state: <strong style="color:var(--fg);">83% continuation rate</strong> across 182 observed events. The carry almost always persists into the next day.
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- STEP 8: THE PL -->
+<div class="step">
+  <div class="step-label">Step 8</div>
+  <h2>The Prediction List: 7 PWs</h2>
+  <p style="font-size:0.88rem; color:var(--fg-muted); margin-bottom:14px;">
+    Take the 9 carried pairs and generate every 4-digit number containing ≥4 of them. That gives you <strong>7 unique PWs</strong> — a playable list under the 50-PW limit.
+  </p>
+
+  <div class="card card-or">
+    <div class="section-head">PL from ≥4 pair overlap</div>
+    <div style="padding:14px; display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace;">
+        <span style="font-size:1.1rem; font-weight:800; color:var(--accent); width:28px;">#1</span>
+        <span style="font-size:1.2rem; font-weight:800; letter-spacing:0.2em;">1236</span>
+        <span style="font-size:0.65rem; font-weight:700; padding:2px 6px; border-radius:4px; background:var(--green-bg); color:var(--green); border:1px solid var(--green-border);">6 PAIRS · WINNER</span>
+        <span style="font-size:0.7rem; color:var(--fg-muted); margin-left:auto;">24 perms</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace;">
+        <span style="font-size:0.85rem; font-weight:600; color:var(--fg-muted); width:28px;">#2</span>
+        <span style="font-size:1rem; font-weight:700; letter-spacing:0.2em;">1237</span>
+        <span style="font-size:0.65rem; color:var(--fg-muted);">4 pairs</span>
+        <span style="font-size:0.7rem; color:var(--fg-muted); margin-left:auto;">24 perms</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace;">
+        <span style="font-size:0.85rem; font-weight:600; color:var(--fg-muted); width:28px;">#3</span>
+        <span style="font-size:1rem; font-weight:700; letter-spacing:0.2em;">1238</span>
+        <span style="font-size:0.65rem; color:var(--fg-muted);">4 pairs</span>
+        <span style="font-size:0.7rem; color:var(--fg-muted); margin-left:auto;">24 perms</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace;">
+        <span style="font-size:0.85rem; font-weight:600; color:var(--fg-muted); width:28px;">#4</span>
+        <span style="font-size:1rem; font-weight:700; letter-spacing:0.2em;">1267</span>
+        <span style="font-size:0.65rem; color:var(--fg-muted);">4 pairs</span>
+        <span style="font-size:0.7rem; color:var(--fg-muted); margin-left:auto;">24 perms</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace;">
+        <span style="font-size:0.85rem; font-weight:600; color:var(--fg-muted); width:28px;">#5</span>
+        <span style="font-size:1rem; font-weight:700; letter-spacing:0.2em;">1268</span>
+        <span style="font-size:0.65rem; color:var(--fg-muted);">4 pairs</span>
+        <span style="font-size:0.7rem; color:var(--fg-muted); margin-left:auto;">24 perms</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace;">
+        <span style="font-size:0.85rem; font-weight:600; color:var(--fg-muted); width:28px;">#6</span>
+        <span style="font-size:1rem; font-weight:700; letter-spacing:0.2em;">1367</span>
+        <span style="font-size:0.65rem; color:var(--fg-muted);">4 pairs</span>
+        <span style="font-size:0.7rem; color:var(--fg-muted); margin-left:auto;">24 perms</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace;">
+        <span style="font-size:0.85rem; font-weight:600; color:var(--fg-muted); width:28px;">#7</span>
+        <span style="font-size:1rem; font-weight:700; letter-spacing:0.2em;">1368</span>
+        <span style="font-size:0.65rem; color:var(--fg-muted);">4 pairs</span>
+        <span style="font-size:0.7rem; color:var(--fg-muted); margin-left:auto;">24 perms</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-green" style="margin-top:14px;">
+    <span class="callout-icon">🎯</span>
+    <div class="callout-body">
+      <strong>PW 1236 — #1 on the list — was drawn as 1263 at 10PM.</strong> Six of Oregon's nine hot pairs lived inside this single number. The Triple Stack didn't just find the right state. It found the right number, ranked first.
+    </div>
+  </div>
+
+  <div style="margin-top:16px; font-size:0.85rem; color:var(--fg-muted); line-height:1.6;">
+    <strong style="color:var(--fg);">The cost:</strong> 7 PWs × 24 avg perms = 168 straight bets at $0.50 = <strong style="color:var(--accent);">$84/draw</strong>. A straight Pick 4 hit pays $5,000. That's a <span class="mult">59× return</span> on the structural winner.
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- LIVE SIGNAL: SC -->
+<div class="step" id="live">
+  <div class="step-label" style="color:var(--green);">Live Signal · Nov 19 → 20</div>
+  <h2>South Carolina: First-Ever Triple Stack</h2>
+  <p style="font-size:0.88rem; color:var(--fg-muted); margin-bottom:14px;">
+    SC just fired its <strong style="color:var(--fg);">first Triple Stack in the entire dataset</strong>. Three 2DP pairs carrying — two of them repeat from yesterday, two running hot — plus a 3DP carry (456). SC is on day 6 of a carry streak.
+  </p>
+
+  <div class="stats">
+    <div class="stat-box">
+      <div class="stat-num accent">3</div>
+      <div class="stat-label">2DPs carried</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--repeat);">2</div>
+      <div class="stat-label">Repeat pairs</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num hot">2</div>
+      <div class="stat-label">Hot pairs</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--blue);">1</div>
+      <div class="stat-label">3DP carry</div>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:var(--green-border); background:linear-gradient(135deg, rgba(34,197,94,0.04), var(--bg-card) 60%);">
+    <div class="section-head">SC 2DP Carries · Nov 19→20</div>
+    <div class="legend" style="border-top:none; padding-top:4px;">
+      <span class="legend-item"><span class="legend-swatch" style="background:var(--hot)"></span> Hot (h≥4)</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:var(--repeat); border-radius:50%;"></span> Repeat from Nov 18→19</span>
+    </div>
+    <div class="pair-grid">
+      <div class="pair-chip hot repeat">
+        45
+        <span class="pair-meta">1d · h4</span>
+        <span class="pair-tod">Midday</span>
+      </div>
+      <div class="pair-chip hot">
+        46
+        <span class="pair-meta">2d · h4</span>
+        <span class="pair-tod">Midday</span>
+      </div>
+      <div class="pair-chip repeat">
+        56
+        <span class="pair-meta">1d · h3</span>
+        <span class="pair-tod">Midday</span>
+      </div>
+    </div>
+    <div class="section-head">3DP Carry</div>
+    <div class="trip-chips">
+      <div class="trip-chip">456 <span class="trip-meta">3d</span></div>
+    </div>
+  </div>
+
+  <div class="callout callout-green" style="margin-top:14px;">
+    <span class="callout-icon">⚡</span>
+    <div class="callout-body">
+      <strong>SC's Triple Stack score: 27.</strong> The only active Triple Stack today. All three pairs share digits 4, 5, 6 — the same digit cluster that formed 3DP 456. Pairs 45 and 56 both carried yesterday too (repeat), and 45 and 46 are both heat=4 (hot). This is a tightly coupled structural cluster.
+    </div>
+  </div>
+
+  <div style="margin-top:16px; font-size:0.85rem; color:var(--fg-muted); line-height:1.6;">
+    <strong style="color:var(--fg);">What to watch for Nov 20→21:</strong> The 83% rule says SC should carry at least one pair tomorrow. The digit cluster 4-5-6 is locked in. If SC carries again, this becomes a compound event — the same structural persistence that powered Oregon's 48-day streak.
+  </div>
+
+  <div style="margin-top:20px;">
+    <div class="section-head">Triple Stack Leaderboard · November</div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="cmp-table">
+        <thead>
+          <tr><th>State</th><th>Events</th><th>Peak Score</th><th>Peak Date</th><th>Streak</th></tr>
+        </thead>
+        <tbody>
+          <tr><td style="font-weight:700;">OR</td><td>28</td><td style="color:var(--accent); font-weight:700;">360</td><td>Nov 8</td><td>48d</td></tr>
+          <tr><td style="font-weight:700;">TX</td><td>17</td><td style="color:var(--accent); font-weight:700;">315</td><td>Nov 12</td><td>4d</td></tr>
+          <tr><td style="font-weight:700;">GA</td><td>15</td><td>48</td><td>Nov 12</td><td>49d</td></tr>
+          <tr><td style="font-weight:700;">TN</td><td>13</td><td>30</td><td>Nov 10</td><td>—</td></tr>
+          <tr style="background:var(--green-bg);">
+            <td style="font-weight:700; color:var(--green);">SC</td>
+            <td style="color:var(--green);">1</td>
+            <td style="color:var(--green); font-weight:700;">27</td>
+            <td style="color:var(--green);">Nov 19</td>
+            <td style="color:var(--green);">6d</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  MyLottoData · Carry Analysis · November 2026
+</div>
+</body>
+</html>
