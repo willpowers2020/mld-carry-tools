@@ -1,302 +1,331 @@
 #!/usr/bin/env node
 /**
- * Generate carry-data.json and recent-draws.json for the Carry Explorer.
- * Runs daily via GitHub Action or manually.
+ * Generate carry-data.json — daily 2DP/3DP carry analysis across all Pick 4 states.
+ * Pulls last 50 days of draws from MongoDB, computes transitions with pair dormancy,
+ * carry detection, and signal flags.
  *
- * Env: MONGODB_URI
- * Output: carry-data.json, recent-draws.json in repo root
+ * Usage:
+ *   MONGO_URL="mongodb+srv://..." node scripts/generate-carry-data.mjs
+ *   # or with .env:
+ *   node --env-file=../.env scripts/generate-carry-data.mjs
  */
+
 import { MongoClient } from 'mongodb';
 import { writeFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, '..');
 
-const MONGODB_URI = process.env.MONGODB_URI;
-if (!MONGODB_URI) { console.error('Missing MONGODB_URI'); process.exit(1); }
+const MONGO_URL = process.env.MONGO_URL || process.env.MONGODB_URI;
+if (!MONGO_URL) { console.error('Set MONGO_URL or MONGODB_URI'); process.exit(1); }
 
-const LOOKBACK_DAYS = 60;
-const CARRY_WINDOW_DAYS = 45;
-const THREE_DP_WINDOW = 3;
+const DAYS_BACK = 50;
 
-function get2DPs(numStr) {
-  const digits = numStr.split('');
-  const pairs = new Set();
-  for (let i = 0; i < digits.length; i++)
-    for (let j = i + 1; j < digits.length; j++)
-      pairs.add([digits[i], digits[j]].sort().join(''));
-  return [...pairs].sort();
+function get2DPs(numArr) {
+  const pairs = [];
+  for (let i = 0; i < numArr.length; i++)
+    for (let j = i + 1; j < numArr.length; j++)
+      pairs.push([numArr[i], numArr[j]].sort((a, b) => a - b).join(''));
+  return [...new Set(pairs)].sort();
 }
 
-function get3DPs(numStr) {
-  const digits = numStr.split('');
-  const trips = new Set();
-  for (let i = 0; i < digits.length; i++)
-    for (let j = i + 1; j < digits.length; j++)
-      for (let k = j + 1; k < digits.length; k++)
-        trips.add([digits[i], digits[j], digits[k]].sort().join(''));
-  return [...trips].sort();
+function get3DPs(numArr) {
+  const trips = [];
+  for (let i = 0; i < numArr.length; i++)
+    for (let j = i + 1; j < numArr.length; j++)
+      for (let k = j + 1; k < numArr.length; k++)
+        trips.push([numArr[i], numArr[j], numArr[k]].sort((a, b) => a - b).join(''));
+  return [...new Set(trips)].sort();
 }
 
-function digitPattern(num) {
-  const freq = {};
-  for (const c of num) freq[c] = (freq[c] || 0) + 1;
-  const vals = Object.values(freq).sort((a, b) => b - a);
-  if (vals[0] === 4) return 'Quad';
-  if (vals[0] === 3) return 'Triple';
-  if (vals[0] === 2 && vals[1] === 2) return 'DblDbl';
-  if (vals[0] === 2) return 'Double';
-  return 'Single';
+function dateStr(d) {
+  return d.toISOString().slice(0, 10);
 }
 
-async function run() {
-  const client = new MongoClient(MONGODB_URI);
+async function main() {
+  const client = new MongoClient(MONGO_URL);
   await client.connect();
-  const coll = client.db('lottery').collection('draws');
+  const col = client.db('lottery').collection('draws');
 
-  const now = new Date();
-  const lookbackStart = new Date(now);
-  lookbackStart.setDate(lookbackStart.getDate() - LOOKBACK_DAYS);
-  const carryStart = new Date(now);
-  carryStart.setDate(carryStart.getDate() - CARRY_WINDOW_DAYS);
+  const cutoff = new Date();
+  cutoff.setUTCDate(cutoff.getUTCDate() - DAYS_BACK);
+  cutoff.setUTCHours(0, 0, 0, 0);
 
-  const draws = await coll.find({
+  console.log(`Fetching pick4 draws since ${dateStr(cutoff)}...`);
+  const rawDraws = await col.find({
     game_type: 'pick4',
-    date: { $gte: lookbackStart, $lte: now }
-  }).sort({ date: 1 }).toArray();
+    date: { $gte: cutoff }
+  }).sort({ date: 1, state: 1, tod: 1 }).toArray();
 
-  console.log(`Draws loaded: ${draws.length}`);
+  console.log(`Got ${rawDraws.length} draws`);
 
-  const byDateState = {};
-  for (const d of draws) {
-    const ds = d.date.toISOString().split('T')[0];
-    if (!byDateState[ds]) byDateState[ds] = {};
-    if (!byDateState[ds][d.state]) byDateState[ds][d.state] = [];
-    const num = d.number_str || d.normalized;
-    if (num && num.length === 4) {
-      byDateState[ds][d.state].push({
-        tod: d.tod || '', num,
-        norm: d.normalized || num.split('').sort().join(''),
-        game: d.game || ''
-      });
-    }
-  }
-  const dates = Object.keys(byDateState).sort();
+  // Group by date
+  const byDate = {};
+  for (const d of rawDraws) {
+    const ds = dateStr(d.date);
+    if (!byDate[ds]) byDate[ds] = {};
+    const st = (d.state || '').toUpperCase();
+    if (!byDate[ds][st]) byDate[ds][st] = [];
 
-  // Build pair/trip history
-  const state2dpHist = {};
-  const state3dpHist = {};
-  for (const date of dates) {
-    for (const st of Object.keys(byDateState[date])) {
-      if (!state2dpHist[st]) state2dpHist[st] = {};
-      if (!state3dpHist[st]) state3dpHist[st] = {};
-      const seen2 = new Set(), seen3 = new Set();
-      for (const entry of byDateState[date][st]) {
-        get2DPs(entry.num).forEach(p => seen2.add(p));
-        get3DPs(entry.num).forEach(p => seen3.add(p));
-      }
-      for (const p of seen2) { if (!state2dpHist[st][p]) state2dpHist[st][p] = []; state2dpHist[st][p].push(date); }
-      for (const p of seen3) { if (!state3dpHist[st][p]) state3dpHist[st][p] = []; state3dpHist[st][p].push(date); }
-    }
-  }
+    const digits = Array.isArray(d.numbers) ? d.numbers :
+      (d.number_str ? d.number_str.split('').map(Number) :
+       String(d.normalized || '').split('').map(Number));
 
-  const carryStartStr = carryStart.toISOString().split('T')[0];
-  const transitions = [];
+    if (digits.length !== 4) continue;
 
-  for (let i = 0; i < dates.length - 1; i++) {
-    const d1 = dates[i], d2 = dates[i + 1];
-    if (d1 < carryStartStr) continue;
-
-    const d2States = byDateState[d2];
-    if (!d2States) continue;
-
-    const windowDates = [];
-    for (let w = i; w >= 0 && w > i - THREE_DP_WINDOW; w--) windowDates.push(dates[w]);
-
-    const stateResults = [];
-    let carryCount2 = 0, carryCount3 = 0, totalCount = 0;
-
-    const allStates = new Set([...Object.keys(byDateState[d1] || {}), ...Object.keys(d2States)]);
-
-    for (const st of allStates) {
-      if (!byDateState[d1]?.[st] || !d2States[st]) continue;
-      totalCount++;
-
-      const d1Draws = byDateState[d1][st];
-      const d2Draws = d2States[st];
-
-      // 2DP carry
-      const d1Pairs2 = new Set();
-      for (const dr of d1Draws) get2DPs(dr.num).forEach(p => d1Pairs2.add(p));
-      const d2Pairs2 = new Set();
-      for (const dr of d2Draws) get2DPs(dr.num).forEach(p => d2Pairs2.add(p));
-      const carried2 = [...d1Pairs2].filter(p => d2Pairs2.has(p)).sort();
-
-      const carried2WithDorm = carried2.map(p => {
-        const hist = state2dpHist[st]?.[p] || [];
-        let dorm = null;
-        for (let k = hist.length - 1; k >= 0; k--) {
-          if (hist[k] < d1) { dorm = Math.round((new Date(d1) - new Date(hist[k])) / 86400000); break; }
-        }
-        // Heat: how many times this pair appeared in the state in the last 14 days
-        let heat14 = 0;
-        for (const hd of hist) {
-          if (hd >= d1) break;
-          const diff = Math.round((new Date(d1) - new Date(hd)) / 86400000);
-          if (diff <= 14) heat14++;
-        }
-        return { p, d: dorm, heat14 };
-      });
-
-      // Determine TOD transition for each carried pair
-      const carriedTOD = {};
-      for (const pair of carried2) {
-        for (const d1dr of d1Draws) {
-          for (const d2dr of d2Draws) {
-            if (get2DPs(d1dr.num).includes(pair) && get2DPs(d2dr.num).includes(pair)) {
-              carriedTOD[pair] = `${d1dr.tod || 'unknown'}->${d2dr.tod || 'unknown'}`;
-            }
-          }
-        }
-      }
-      // Annotate each carried entry with TOD transition
-      for (const c of carried2WithDorm) {
-        c.tod = carriedTOD[c.p] || null;
-      }
-
-      const hasSingles = d1Draws.some(dr => digitPattern(dr.num) === 'Single');
-      const onlyCarrier2 = carried2.length === 1;
-      const maxDorm2 = carried2WithDorm.length ? Math.max(...carried2WithDorm.map(c => c.d || 0)) : 0;
-      const signal2 = hasSingles && onlyCarrier2 && maxDorm2 >= 11;
-      // New signals
-      const hasColdSignal = carried2WithDorm.some(c => c.heat14 === 0);
-      const hasEveSignal = carried2WithDorm.some(c => c.tod === 'Evening->Evening');
-      const coldEvePairs = carried2WithDorm.filter(c => c.heat14 === 0 && c.tod === 'Evening->Evening');
-      const hasColdEveSignal = coldEvePairs.length > 0;
-
-      if (carried2.length > 0) carryCount2++;
-
-      // 3DP carry
-      const windowTrips = new Set();
-      const windowDrawsByTrip = {};
-      for (const wd of windowDates) {
-        if (!byDateState[wd]?.[st]) continue;
-        for (const dr of byDateState[wd][st]) {
-          for (const t of get3DPs(dr.num)) {
-            windowTrips.add(t);
-            if (!windowDrawsByTrip[t]) windowDrawsByTrip[t] = [];
-            windowDrawsByTrip[t].push({ date: wd, num: dr.num, tod: dr.tod });
-          }
-        }
-      }
-      const d2Trips = new Set();
-      for (const dr of d2Draws) get3DPs(dr.num).forEach(t => d2Trips.add(t));
-      const carried3 = [...windowTrips].filter(t => d2Trips.has(t)).sort();
-
-      const carried3WithInfo = carried3.map(t => {
-        const hist = state3dpHist[st]?.[t] || [];
-        let dorm = null;
-        const srcDate = windowDrawsByTrip[t]?.[0]?.date || d1;
-        for (let k = hist.length - 1; k >= 0; k--) {
-          if (hist[k] < srcDate) { dorm = Math.round((new Date(srcDate) - new Date(hist[k])) / 86400000); break; }
-        }
-        return { p: t, d: dorm, src: (windowDrawsByTrip[t] || []).map(s => ({ date: s.date, num: s.num, tod: s.tod })) };
-      });
-
-      if (carried3.length > 0) carryCount3++;
-
-      const d1Info = d1Draws.map(dr => ({
-        tod: dr.tod, num: dr.num, norm: dr.norm,
-        pairs: get2DPs(dr.num).map(p => ({
-          p, d: (() => {
-            const hist = state2dpHist[st]?.[p] || [];
-            for (let k = hist.length - 1; k >= 0; k--) { if (hist[k] < d1) return Math.round((new Date(d1) - new Date(hist[k])) / 86400000); }
-            return null;
-          })(), c: carried2.includes(p) ? 1 : 0
-        })),
-        trips: get3DPs(dr.num).map(t => ({ p: t, c: carried3.includes(t) ? 1 : 0 })),
-        pattern: digitPattern(dr.num)
-      }));
-
-      const d2Info = d2Draws.map(dr => ({
-        tod: dr.tod, num: dr.num, norm: dr.norm,
-        pairs: get2DPs(dr.num).map(p => ({
-          p, d: (() => {
-            const hist = state2dpHist[st]?.[p] || [];
-            for (let k = hist.length - 1; k >= 0; k--) { if (hist[k] < d2) return Math.round((new Date(d2) - new Date(hist[k])) / 86400000); }
-            return null;
-          })(), c: carried2.includes(p) ? 1 : 0
-        })),
-        trips: get3DPs(dr.num).map(t => ({ p: t, c: carried3.includes(t) ? 1 : 0 })),
-        carried_from_d1: carried2.filter(p => get2DPs(dr.num).includes(p)),
-        carried_3dp: carried3.filter(t => get3DPs(dr.num).includes(t))
-      }));
-
-      stateResults.push({
-        state: st.toUpperCase(), d1_draws: d1Info, d2_draws: d2Info,
-        carried: carried2WithDorm, carried_3dp: carried3WithInfo,
-        has_carry: carried2.length > 0, has_carry_3dp: carried3.length > 0,
-        signal: signal2, signal_pair: onlyCarrier2 && carried2.length ? carried2[0] : null,
-        signal_dorm: maxDorm2, has_singles: hasSingles, only_carrier: onlyCarrier2,
-        cold_signal: hasColdSignal, eve_signal: hasEveSignal,
-        cold_eve_signal: hasColdEveSignal,
-        cold_eve_pairs: coldEvePairs.map(c => c.p)
-      });
-    }
-
-    stateResults.sort((a, b) => a.state.localeCompare(b.state));
-    const rate2 = totalCount ? Math.round(carryCount2 / totalCount * 1000) / 10 : 0;
-    const rate3 = totalCount ? Math.round(carryCount3 / totalCount * 1000) / 10 : 0;
-
-    transitions.push({
-      from_date: d1, to_date: d2, total_states: totalCount,
-      carry_states: carryCount2, carry_states_3dp: carryCount3,
-      no_carry_states: totalCount - carryCount2,
-      rate: rate2, rate_3dp: rate3,
-      signal_count: stateResults.filter(s => s.signal).length,
-      cold_signal_count: stateResults.filter(s => s.cold_signal).length,
-      eve_signal_count: stateResults.filter(s => s.eve_signal).length,
-      cold_eve_signal_count: stateResults.filter(s => s.cold_eve_signal).length,
-      window_3dp: THREE_DP_WINDOW, states: stateResults
+    byDate[ds][st].push({
+      num: digits.join(''),
+      norm: [...digits].sort((a, b) => a - b).join(''),
+      tod: d.tod || null,
+      digits
     });
   }
 
-  // Draws index
-  const drawsIndex = {};
-  for (const date of dates) {
-    if (date < carryStartStr) continue;
-    drawsIndex[date] = {};
-    for (const st of Object.keys(byDateState[date])) {
-      drawsIndex[date][st.toUpperCase()] = byDateState[date][st].map(d => d.num);
+  const dates = Object.keys(byDate).sort();
+  console.log(`${dates.length} unique dates: ${dates[0]} → ${dates[dates.length - 1]}`);
+
+  // Build pair history for dormancy lookups
+  const pairHistory = {}; // state -> pair -> [date strings]
+  const tripHistory = {}; // state -> trip -> [date strings]
+  for (const ds of dates) {
+    for (const [st, draws] of Object.entries(byDate[ds])) {
+      if (!pairHistory[st]) pairHistory[st] = {};
+      if (!tripHistory[st]) tripHistory[st] = {};
+      for (const d of draws) {
+        for (const p of get2DPs(d.digits)) {
+          if (!pairHistory[st][p]) pairHistory[st][p] = [];
+          pairHistory[st][p].push(ds);
+        }
+        for (const t of get3DPs(d.digits)) {
+          if (!tripHistory[st][t]) tripHistory[st][t] = [];
+          tripHistory[st][t].push(ds);
+        }
+      }
     }
   }
 
-  writeFileSync(join(OUT_DIR, 'carry-data.json'), JSON.stringify(transitions));
-  writeFileSync(join(OUT_DIR, 'recent-draws.json'), JSON.stringify(drawsIndex));
+  function pairDormancy(state, pair, beforeDate) {
+    const hist = pairHistory[state]?.[pair];
+    if (!hist) return null;
+    const prior = hist.filter(d => d < beforeDate);
+    if (!prior.length) return null;
+    const last = prior[prior.length - 1];
+    return Math.round((new Date(beforeDate) - new Date(last)) / 86400000);
+  }
 
-  const generated = now.toISOString().split('T')[0];
-  const first = transitions[0]?.from_date || '?';
-  const last = transitions[transitions.length - 1]?.to_date || '?';
-  console.log(`Generated: ${transitions.length} transitions (${first} → ${last})`);
-  console.log(`Signal events: ${transitions.reduce((s, t) => s + t.signal_count, 0)}`);
-  console.log(`3DP carry avg: ${(transitions.reduce((s, t) => s + (t.rate_3dp || 0), 0) / transitions.length).toFixed(1)}%`);
+  function tripDormancy(state, trip, beforeDate) {
+    const hist = tripHistory[state]?.[trip];
+    if (!hist) return null;
+    const prior = hist.filter(d => d < beforeDate);
+    if (!prior.length) return null;
+    const last = prior[prior.length - 1];
+    return Math.round((new Date(beforeDate) - new Date(last)) / 86400000);
+  }
 
-  // Update the date range in index.html
-  const { readFileSync } = await import('fs');
-  const indexPath = join(OUT_DIR, 'index.html');
-  let indexHtml = readFileSync(indexPath, 'utf8');
-  const dateRangeRe = /Oct 1 – Nov \d+, 2026|[A-Z][a-z]+ \d+ – [A-Z][a-z]+ \d+, \d{4}/;
-  const fmtMonth = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const startD = new Date(first + 'T12:00:00Z');
-  const endD = new Date(last + 'T12:00:00Z');
-  const rangeStr = `${fmtMonth[startD.getUTCMonth()]} ${startD.getUTCDate()} – ${fmtMonth[endD.getUTCMonth()]} ${endD.getUTCDate()}, ${endD.getUTCFullYear()}`;
-  indexHtml = indexHtml.replace(dateRangeRe, rangeStr);
-  writeFileSync(indexPath, indexHtml);
-  console.log(`Updated date range in index.html: ${rangeStr}`);
+  function pairHeat14(state, pair, beforeDate) {
+    const hist = pairHistory[state]?.[pair];
+    if (!hist) return 0;
+    const cutoff = new Date(beforeDate);
+    cutoff.setUTCDate(cutoff.getUTCDate() - 14);
+    const cutStr = dateStr(cutoff);
+    return hist.filter(d => d >= cutStr && d < beforeDate).length;
+  }
+
+  // Build transitions
+  const transitions = [];
+  for (let i = 0; i < dates.length - 1; i++) {
+    const d1Date = dates[i];
+    const d2Date = dates[i + 1];
+
+    const allStates = new Set([...Object.keys(byDate[d1Date]), ...Object.keys(byDate[d2Date])]);
+    const stateResults = [];
+    let carryCount = 0, carry3dpCount = 0;
+    let signalCount = 0, coldEveCount = 0;
+
+    for (const st of [...allStates].sort()) {
+      const d1Draws = byDate[d1Date][st] || [];
+      const d2Draws = byDate[d2Date][st] || [];
+      if (!d1Draws.length || !d2Draws.length) continue;
+
+      // Get all 2DPs from d1
+      const d1Pairs = new Map();
+      for (const d of d1Draws) {
+        for (const p of get2DPs(d.digits)) {
+          if (!d1Pairs.has(p)) {
+            d1Pairs.set(p, {
+              p,
+              d: pairDormancy(st, p, d1Date),
+              heat14: pairHeat14(st, p, d1Date),
+              tod: d.tod,
+              src: d.num
+            });
+          }
+        }
+      }
+
+      // Get all 2DPs from d2
+      const d2PairSet = new Set();
+      for (const d of d2Draws)
+        for (const p of get2DPs(d.digits))
+          d2PairSet.add(p);
+
+      // Find carried pairs
+      const carried = [];
+      for (const [p, info] of d1Pairs) {
+        if (d2PairSet.has(p)) {
+          carried.push({ p, d: info.d, heat14: info.heat14, c: 1, tod: info.tod });
+        }
+      }
+
+      // 3DP analysis
+      const d1Trips = new Map();
+      for (const d of d1Draws) {
+        for (const t of get3DPs(d.digits)) {
+          if (!d1Trips.has(t)) {
+            d1Trips.set(t, { p: t, d: tripDormancy(st, t, d1Date), c: 0, tod: d.tod });
+          }
+        }
+      }
+      const d2TripSet = new Set();
+      for (const d of d2Draws)
+        for (const t of get3DPs(d.digits))
+          d2TripSet.add(t);
+
+      const carried3dp = [];
+      for (const [t, info] of d1Trips) {
+        if (d2TripSet.has(t)) {
+          carried3dp.push({ p: t, d: info.d, c: 1, tod: info.tod });
+        }
+      }
+
+      const hasCarry = carried.length > 0;
+      const hasCarry3dp = carried3dp.length > 0;
+      if (hasCarry) carryCount++;
+      if (hasCarry3dp) carry3dpCount++;
+
+      // Signal detection
+      const coldPairs = carried.filter(c => c.heat14 === 0 && c.d != null && c.d >= 14);
+      const eveSrc = d1Draws.filter(d => (d.tod || '').toLowerCase().includes('even'));
+      const eveWin = d2Draws.filter(d => (d.tod || '').toLowerCase().includes('even'));
+
+      let coldEveSignal = false, coldEvePairs = [];
+      if (coldPairs.length && eveSrc.length && eveWin.length) {
+        const eveSrcPairs = new Set();
+        for (const d of eveSrc) for (const p of get2DPs(d.digits)) eveSrcPairs.add(p);
+        const eveWinPairs = new Set();
+        for (const d of eveWin) for (const p of get2DPs(d.digits)) eveWinPairs.add(p);
+        coldEvePairs = coldPairs.filter(c => eveSrcPairs.has(c.p) && eveWinPairs.has(c.p));
+        if (coldEvePairs.length) {
+          coldEveSignal = true;
+          coldEveCount++;
+        }
+      }
+
+      let signal = false, signalPair = null;
+      const singlesSrc = d1Draws.filter(d => {
+        const freq = {};
+        for (const c of d.digits) freq[c] = (freq[c] || 0) + 1;
+        return Math.max(...Object.values(freq)) === 1;
+      });
+      if (singlesSrc.length && carried.length === 1 && carried[0].d != null && carried[0].d >= 11) {
+        signal = true;
+        signalPair = carried[0].p;
+        signalCount++;
+      }
+
+      // Build d1_draws and d2_draws with pair info
+      const d1DrawsOut = d1Draws.map(d => ({
+        num: d.num,
+        tod: d.tod,
+        pairs: get2DPs(d.digits).map(p => ({
+          p,
+          d: pairDormancy(st, p, d1Date),
+          heat14: pairHeat14(st, p, d1Date),
+          c: d2PairSet.has(p) ? 1 : 0
+        })),
+        trips: get3DPs(d.digits).map(t => ({
+          p: t,
+          d: tripDormancy(st, t, d1Date),
+          c: d2TripSet.has(t) ? 1 : 0
+        }))
+      }));
+
+      const d2DrawsOut = d2Draws.map(d => {
+        const d2p = get2DPs(d.digits);
+        const d2t = get3DPs(d.digits);
+        const carriedFromD1 = d2p.filter(p => d1Pairs.has(p));
+        const carried3dpFromD1 = d2t.filter(t => d1Trips.has(t));
+        return {
+          num: d.num,
+          tod: d.tod,
+          pairs: d2p.map(p => ({
+            p,
+            d: pairDormancy(st, p, d2Date),
+            heat14: pairHeat14(st, p, d2Date),
+            c: d1Pairs.has(p) ? 1 : 0
+          })),
+          trips: d2t.map(t => ({
+            p: t,
+            d: tripDormancy(st, t, d2Date),
+            c: d1Trips.has(t) ? 1 : 0
+          })),
+          carried_from_d1: carriedFromD1,
+          carried_3dp: carried3dpFromD1
+        };
+      });
+
+      stateResults.push({
+        state: st,
+        has_carry: hasCarry,
+        has_carry_3dp: hasCarry3dp,
+        d1_draws: d1DrawsOut,
+        d2_draws: d2DrawsOut,
+        carried,
+        carried_3dp: carried3dp,
+        cold_eve_signal: coldEveSignal,
+        cold_eve_pairs: coldEvePairs.map(c => c.p),
+        signal,
+        signal_pair: signalPair
+      });
+    }
+
+    const totalStates = stateResults.length;
+    transitions.push({
+      from_date: d1Date,
+      to_date: d2Date,
+      rate: totalStates ? Math.round(carryCount / totalStates * 1000) / 10 : 0,
+      rate_3dp: totalStates ? Math.round(carry3dpCount / totalStates * 1000) / 10 : 0,
+      carry_states: carryCount,
+      carry_states_3dp: carry3dpCount,
+      total_states: totalStates,
+      signal_count: signalCount,
+      cold_eve_signal_count: coldEveCount,
+      states: stateResults
+    });
+  }
 
   await client.close();
+
+  // Write carry-data.json
+  const outPath = join(OUT_DIR, 'carry-data.json');
+  writeFileSync(outPath, JSON.stringify(transitions));
+  const sizeMB = (Buffer.byteLength(JSON.stringify(transitions)) / 1024 / 1024).toFixed(1);
+  console.log(`\nWrote ${outPath} (${sizeMB}MB, ${transitions.length} transitions)`);
+  console.log(`Date range: ${transitions[0]?.from_date} → ${transitions[transitions.length - 1]?.to_date}`);
+
+  // Also write recent-draws.json (draws-index for Carry Explorer)
+  const drawsIndex = {};
+  for (const ds of dates) {
+    drawsIndex[ds] = {};
+    for (const [st, draws] of Object.entries(byDate[ds])) {
+      drawsIndex[ds][st] = draws.map(d => d.num);
+    }
+  }
+  const drawsPath = join(OUT_DIR, 'recent-draws.json');
+  writeFileSync(drawsPath, JSON.stringify(drawsIndex));
+  console.log(`Wrote ${drawsPath}`);
 }
 
-run().catch(e => { console.error(e); process.exit(1); });
+main().catch(err => { console.error(err); process.exit(1); });
